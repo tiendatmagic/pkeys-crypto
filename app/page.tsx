@@ -20,7 +20,7 @@ export default function Home() {
               Explore the <span className="text-md-primary">Uncountable</span> Universe
             </h1>
             <p className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              A premium, high-performance explorer built on Material Design 3. 
+              A premium, high-performance explorer built on Material Design 3.
               Navigate through $2^{256}$ keys with absolute precision.
             </p>
             <div className="pt-8 flex flex-wrap justify-center gap-6">
@@ -75,16 +75,16 @@ export default function Home() {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-lg bg-md-primary flex items-center justify-center shadow-md-1">
-                <Key className="w-4 h-4 text-white" />
+              <Key className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight">pkeys crypto</span>
+            <span className="text-xl font-bold tracking-tight">Pkeys crypto</span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm max-w-lg mx-auto mb-8 font-medium italic">
-            Educational tool to visualize the entropy of private keys. 
+            Educational tool to visualize the entropy of private keys.
             Never use keys found here for storing real assets.
           </p>
           <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-white dark:bg-gray-900 px-6 py-2 rounded-full inline-block shadow-md-1">
-            Copyright 2026 pkeys crypto. All rights reserved.
+            Copyright 2026 Pkeys crypto. All rights reserved.
           </div>
         </div>
       </footer>
