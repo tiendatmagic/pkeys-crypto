@@ -70,18 +70,18 @@ export function KeyTable({ page }: KeyTableProps) {
   }, [keys, provider]);
 
   return (
-    <div className="w-full bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-xl shadow-sm overflow-hidden">
+    <div className="md-card overflow-hidden">
         <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
-        <thead className="bg-gray-50 dark:bg-gray-900/50">
+        <thead className="bg-gray-50/50 dark:bg-gray-900/30">
           <tr>
-            <th className="py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider"># Index</th>
-            <th className="py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Balance</th>
-            <th className="py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Private Key</th>
-            <th className="py-4 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ethereum Address</th>
+            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800"># Index</th>
+            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Balance</th>
+            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Private Key</th>
+            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Ethereum Address</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
           {keys.map((key) => (
             <KeyRow 
                 key={key.index.toString()} 

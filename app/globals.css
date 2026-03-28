@@ -3,8 +3,35 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: "Roboto", var(--font-geist-sans), system-ui;
+  --font-mono: var(--font-geist-mono), monospace;
+
+  /* Material Design 3 Elevation Shadows */
+  --shadow-md-1: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-md-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  
+  --color-md-primary: #3f51b5;
+  --color-md-primary-container: #e8eaf6;
+  
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @keyframes ripple {
+    from {
+      transform: scale(0);
+      opacity: 0.3;
+    }
+    to {
+      transform: scale(4);
+      opacity: 0;
+    }
+  }
+}
+
+@layer utilities {
+  .animate-ripple {
+    animation: ripple 0.6s linear forwards;
+  }
 }
 
 * {
@@ -13,10 +40,16 @@
 
 body {
   @apply bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100;
-  font-family: var(--font-sans), system-ui, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: var(--font-sans);
+  transition: background-color 0.3s var(--ease-standard), color 0.3s var(--ease-standard);
 }
 
 pre, code {
-  font-family: var(--font-mono), monospace;
+  font-family: var(--font-mono);
+}
+
+@layer components {
+  .md-card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl shadow-md-1 hover:shadow-md-2 transition-shadow duration-300;
+  }
 }

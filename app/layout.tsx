@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Crypto Key Explorer | Keys.lol Clone",
+  title: "Pkeys crypto - Ethereum Private Key Explorer",
   description: "Explore Ethereum private keys and balances with a modern interface.",
 };
 
