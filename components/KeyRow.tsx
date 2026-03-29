@@ -67,10 +67,10 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
 
   return (
     <tr className="hover:bg-gray-100/50 dark:hover:bg-gray-800/30 transition-all duration-300 group">
-      <td className="py-4 px-6 text-[11px] font-mono text-gray-400 group-hover:text-md-primary transition-colors duration-300">
+      <td className="py-4 px-2 md:px-6 text-[11px] font-mono text-gray-400 group-hover:text-md-primary transition-colors duration-300">
         {index.toString()}
       </td>
-      <td className="py-4 px-6">
+      <td className="hidden sm:table-cell py-4 px-3 md:px-6">
         <div 
           onClick={() => !isFetching && fetchBalance(address)}
           className={`px-3 py-1.5 rounded-full text-[11px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 ${
@@ -84,25 +84,25 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
           {(balance && parseFloat(balance) > 0 ? <span className="ml-1">ETH</span> : <span className="ml-1 opacity-50">ETH</span>)}
         </div>
       </td>
-      <td className="py-4 px-6 font-mono text-sm leading-none">
-        <div className="flex items-center gap-3">
-            <span className="whitespace-nowrap text-[11px] md:text-[13px] text-gray-600 dark:text-gray-300 tracking-tight" title={privateKey}>
+      <td className="py-4 px-3 md:px-6 font-mono text-sm leading-none">
+        <div className="flex items-center gap-2 md:gap-3">
+            <span className="whitespace-nowrap text-[11px] md:text-[13px] text-gray-600 dark:text-gray-300 tracking-tight block max-w-[80px] sm:max-w-[120px] lg:max-w-none truncate" title={privateKey}>
               {privateKey.replace('0x', '')}
             </span>
             <button 
                 onClick={() => copyToClipboard(privateKey, 'pk')}
-                className="w-8 h-8 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 active:scale-75"
+                className="w-8 h-8 flex items-center justify-center rounded-full opacity-100 lg:opacity-0 lg:group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 active:scale-75 shrink-0"
             >
                 {copied === 'pk' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
             </button>
         </div>
       </td>
-      <td className="py-4 px-6 font-mono text-sm leading-none">
-        <div className="flex items-center gap-3">
-            <span className="text-md-primary dark:text-primary-light whitespace-nowrap text-[11px] md:text-[13px] font-medium" title={address}>
+      <td className="py-4 px-3 md:px-6 font-mono text-sm leading-none">
+        <div className="flex items-center gap-2 md:gap-3">
+            <span className="text-md-primary dark:text-primary-light whitespace-nowrap text-[11px] md:text-[13px] font-medium block max-w-[70px] sm:max-w-[100px] lg:max-w-none truncate" title={address}>
               {address}
             </span>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+            <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 shrink-0">
                 <button 
                     onClick={() => copyToClipboard(address, 'addr')}
                     className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"

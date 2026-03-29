@@ -1,13 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from '@/components/Header';
 import { Key, ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useRipple, RippleContainer } from '@/components/Ripple';
+import { MAX_PAGES } from '@/lib/blockchain';
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  const [randomPage, setRandomPage] = useState<bigint>(1n);
   const { ripples, addRipple } = useRipple();
+
+  useEffect(() => {
+    setMounted(true);
+    // Generate random page only on client using crypto for true randomness
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+    const rand = (BigInt('0x' + hex) % MAX_PAGES) + 1n;
+    setRandomPage(rand);
+  }, []);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
@@ -25,7 +38,7 @@ export default function Home() {
             </p>
             <div className="pt-8 flex flex-wrap justify-center gap-6">
               <Link
-                href="/ethereum/1"
+                href={mounted ? `/ethereum/${randomPage}` : '#'}
                 onMouseDown={addRipple}
                 className="relative overflow-hidden px-10 py-5 rounded-full bg-md-primary text-white font-bold text-lg hover:bg-primary-light transition-all shadow-md-3 hover:shadow-md-4 active:scale-95 flex items-center gap-3 group"
               >

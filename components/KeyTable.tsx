@@ -70,15 +70,15 @@ export function KeyTable({ page }: KeyTableProps) {
   }, [keys, provider]);
 
   return (
-    <div className="md-card overflow-hidden">
-        <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
+    <div className="md-card overflow-hidden w-full max-w-[calc(100vw-2rem)] mx-auto">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-800">
+      <table className="w-full text-left border-collapse min-w-[500px] md:min-w-full">
         <thead className="bg-gray-50/50 dark:bg-gray-900/30">
           <tr>
-            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800"># Index</th>
-            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Balance</th>
-            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Private Key</th>
-            <th className="py-5 px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Ethereum Address</th>
+            <th className="py-5 px-3 md:px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800 shrink-0"># Index</th>
+            <th className="hidden sm:table-cell py-5 px-3 md:px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Balance</th>
+            <th className="py-5 px-3 md:px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Private Key</th>
+            <th className="py-5 px-3 md:px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">Ethereum Address</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">

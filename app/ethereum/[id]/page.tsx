@@ -10,6 +10,7 @@ interface PageProps {
 }
 
 import { Diagnostics } from '@/components/Diagnostics';
+import { Footer } from '@/components/Footer';
 
 export default async function EthereumPage({ params }: PageProps) {
   const { id } = await params;
@@ -33,9 +34,9 @@ export default async function EthereumPage({ params }: PageProps) {
           <h1 className="text-4xl font-extrabold mb-4 tracking-tight">
             Ethereum Private Keys
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400">
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Exploring the vast universe of Ethereum keys.
-            There are 2<sup>256</sup> keys represented as {MAX_PAGES.toString()} pages.
+            There are 2<sup>256</sup> keys represented as <span className="break-all font-mono text-sm opacity-80">{MAX_PAGES.toString()}</span> pages.
           </p>
         </div>
 
@@ -48,22 +49,9 @@ export default async function EthereumPage({ params }: PageProps) {
         <div className="mt-8">
           <Pagination currentPage={page} />
         </div>
-
-        <div className="mt-12 text-center text-sm text-gray-500 max-w-2xl mx-auto border-t border-gray-200 dark:border-gray-800 pt-8">
-          <p className="mb-2 uppercase font-bold tracking-widest text-indigo-500">Security Note</p>
-          <p>
-            Every private key is a potential fortune, but the odds of landing on a funded wallet are
-            astronomically low. This tool is for educational purposes only. Never share your real
-            private keys or seed phrases.
-          </p>
-        </div>
       </main>
 
-      <footer className="py-8 border-t border-gray-200 dark:border-gray-800 mt-auto">
-        <div className="container mx-auto px-4 text-center text-gray-400 text-xs">
-          © 2026 Pkeys crypto. Inspired by keys.lol.
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

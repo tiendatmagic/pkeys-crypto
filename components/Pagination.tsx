@@ -21,14 +21,17 @@ export function Pagination({ currentPage }: PaginationProps) {
 
   useEffect(() => {
     setMounted(true);
-    // Generate random page only on client
-    const rand = BigInt(Math.floor(Math.random() * 1000000000000000)) % MAX_PAGES + 1n;
+    // Generate random page only on client using crypto for true randomness
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+    const rand = (BigInt('0x' + hex) % MAX_PAGES) + 1n;
     setRandomPage(rand);
   }, []);
 
   return (
     <div className="flex flex-col items-center gap-6 my-8 transition-all duration-300">
-      <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-gray-100/50 dark:bg-gray-900/50 rounded-full shadow-md-1">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 p-1 md:p-1.5 bg-gray-100/50 dark:bg-gray-900/50 rounded-full shadow-md-1 max-w-full">
         <Link
           href="/ethereum/1"
           onMouseDown={addNavRipple}
@@ -78,7 +81,7 @@ export function Pagination({ currentPage }: PaginationProps) {
         </Link>
       </div>
 
-      <div className="flex items-center gap-2 max-w-xs w-full group">
+      <div className="flex items-center gap-2 max-w-[280px] sm:max-w-xs w-full group">
         <div className="relative flex-1">
           <input
             type="text"
@@ -104,7 +107,7 @@ export function Pagination({ currentPage }: PaginationProps) {
         </div>
       </div>
       
-      <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900/30 px-5 py-2 rounded-full border border-gray-100 dark:border-gray-800">
+      <div className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900/30 px-4 md:px-5 py-2 rounded-2xl md:rounded-full border border-gray-100 dark:border-gray-800 max-w-full break-all text-center mx-4">
         Page <span className="text-md-primary dark:text-primary-light">{currentPage.toString()}</span> of {MAX_PAGES.toString()}
       </div>
     </div>
