@@ -59,5 +59,5 @@ export async function getBalance(address: string, provider: ethers.JsonRpcProvid
 }
 
 export const KEYS_PER_PAGE = 128;
-export const MAX_KEYS = BigInt(1) << BigInt(256);
+export const MAX_KEYS = BigInt('115792089237316195423570985008687907852837564279074904382605163141518161494336'); // secp256k1 order - 1
 export const MAX_PAGES = MAX_KEYS / BigInt(KEYS_PER_PAGE);
