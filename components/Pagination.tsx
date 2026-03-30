@@ -4,20 +4,25 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Dices, CornerDownLeft } from 'lucide-react';
 import Link from 'next/link';
 import { MAX_PAGES } from '@/lib/blockchain';
+import { BTC_MAX_PAGES } from '@/lib/bitcoin';
 import { useRipple, RippleContainer } from './Ripple';
 
 interface PaginationProps {
   currentPage: bigint;
+  network?: 'ethereum' | 'bitcoin';
 }
 
-export function Pagination({ currentPage }: PaginationProps) {
+export function Pagination({ currentPage, network = 'ethereum' }: PaginationProps) {
   const [mounted, setMounted] = useState(false);
   const [randomPage, setRandomPage] = useState<bigint>(1n);
   const { ripples: navRipples, addRipple: addNavRipple } = useRipple();
   const { ripples: randomRipples, addRipple: addRandomRipple } = useRipple();
 
+  const maxPages = network === 'ethereum' ? MAX_PAGES : BTC_MAX_PAGES;
+  const baseUrl = network === 'ethereum' ? '/ethereum' : '/bitcoin';
+
   const prevPage = currentPage > 1n ? currentPage - 1n : 1n;
-  const nextPage = currentPage < MAX_PAGES ? currentPage + 1n : MAX_PAGES;
+  const nextPage = currentPage < maxPages ? currentPage + 1n : maxPages;
 
   useEffect(() => {
     setMounted(true);
@@ -25,15 +30,15 @@ export function Pagination({ currentPage }: PaginationProps) {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
-    const rand = (BigInt('0x' + hex) % MAX_PAGES) + 1n;
+    const rand = (BigInt('0x' + hex) % maxPages) + 1n;
     setRandomPage(rand);
-  }, []);
+  }, [maxPages]);
 
   return (
     <div className="flex flex-col items-center gap-6 my-8 transition-all duration-300">
       <div className="flex flex-wrap items-center justify-center gap-1.5 p-1 md:p-1.5 bg-gray-100/50 dark:bg-gray-900/50 rounded-full shadow-md-1 max-w-full">
         <Link
-          href="/ethereum/1"
+          href={`${baseUrl}/1`}
           onMouseDown={addNavRipple}
           className="relative overflow-hidden p-3 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
           title="First Page"
@@ -42,7 +47,7 @@ export function Pagination({ currentPage }: PaginationProps) {
           <ChevronsLeft className="relative z-10 w-5 h-5" />
         </Link>
         <Link
-          href={`/ethereum/${prevPage}`}
+          href={`${baseUrl}/${prevPage}`}
           onMouseDown={addNavRipple}
           className="relative overflow-hidden p-3 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
           title="Previous Page"
@@ -52,7 +57,7 @@ export function Pagination({ currentPage }: PaginationProps) {
         </Link>
 
         <Link
-          href={mounted ? `/ethereum/${randomPage}` : '#'}
+          href={mounted ? `${baseUrl}/${randomPage}` : '#'}
           onMouseDown={addRandomRipple}
           className="relative overflow-hidden flex items-center gap-2 px-6 py-3 rounded-full bg-md-primary text-white hover:bg-primary-light transition-all duration-300 shadow-md-1 hover:shadow-md-2 active:scale-95 group"
         >
@@ -62,7 +67,7 @@ export function Pagination({ currentPage }: PaginationProps) {
         </Link>
 
         <Link
-          href={`/ethereum/${nextPage}`}
+          href={`${baseUrl}/${nextPage}`}
           onMouseDown={addNavRipple}
           className="relative overflow-hidden p-3 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
           title="Next Page"
@@ -71,7 +76,7 @@ export function Pagination({ currentPage }: PaginationProps) {
           <ChevronRight className="relative z-10 w-5 h-5" />
         </Link>
         <Link
-          href={`/ethereum/${MAX_PAGES}`}
+          href={`${baseUrl}/${maxPages}`}
           onMouseDown={addNavRipple}
           className="relative overflow-hidden p-3 rounded-full hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
           title="Last Page"
@@ -93,8 +98,8 @@ export function Pagination({ currentPage }: PaginationProps) {
                 if (target.value) {
                   try {
                     const targetPage = BigInt(target.value);
-                    if (targetPage >= 1n && targetPage <= MAX_PAGES) {
-                        window.location.href = `/ethereum/${targetPage}`;
+                    if (targetPage >= 1n && targetPage <= maxPages) {
+                        window.location.href = `${baseUrl}/${targetPage}`;
                     }
                   } catch (err) {
                     // Invalid bigint input
@@ -108,8 +113,9 @@ export function Pagination({ currentPage }: PaginationProps) {
       </div>
       
       <div className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 dark:bg-gray-900/30 px-4 md:px-5 py-2 rounded-2xl md:rounded-full border border-gray-100 dark:border-gray-800 max-w-full break-all text-center mx-4">
-        Page <span className="text-md-primary dark:text-primary-light">{currentPage.toString()}</span> of {MAX_PAGES.toString()}
+        Page <span className="text-md-primary dark:text-primary-light">{currentPage.toString()}</span> of {maxPages.toString()}
       </div>
     </div>
   );
 }
+

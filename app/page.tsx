@@ -26,31 +26,68 @@ export default function Home() {
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
       <Header />
 
-      <main className="container mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-24 space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-md">
-            <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-none text-gray-900 dark:text-white">
+      <main className="container mx-auto px-4 py-16 md:py-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16 md:mb-24 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-md">
+            <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-none text-gray-900 dark:text-white">
               Explore the <span className="text-md-primary">Uncountable</span> Universe
             </h1>
-            <p className="text-xl md:text-2xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              A premium, high-performance explorer built on Material Design 3.
+            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
               Navigate through $2^{256}$ keys with absolute precision.
+              A premium, high-performance explorer for the most secure blockchains.
             </p>
-            <div className="pt-8 flex flex-wrap justify-center gap-6">
-              <Link
-                href={mounted ? `/ethereum/${randomPage}` : '#'}
-                onMouseDown={addRipple}
-                className="relative overflow-hidden px-10 py-5 rounded-full bg-md-primary text-white font-bold text-lg hover:bg-primary-light transition-all shadow-md-3 hover:shadow-md-4 active:scale-95 flex items-center gap-3 group"
-              >
-                <RippleContainer ripples={ripples} />
-                <span className="relative z-10 flex items-center gap-3">
-                  Start Exploring <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-                </span>
-              </Link>
-            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 mb-24 max-w-4xl mx-auto px-4">
+               {/* Ethereum Card */}
+               <Link
+                 href={mounted ? `/ethereum/${randomPage}` : '#'}
+                 onMouseDown={addRipple}
+                 className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-md-primary/30"
+               >
+                 <RippleContainer ripples={ripples} />
+                 <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-8 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                      <div className="w-12 h-12 rounded-full bg-md-primary flex items-center justify-center shadow-md-1">
+                        <Key className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <h2 className="text-3xl font-black mb-3">Ethereum</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs">
+                      Explore Ethereum private keys, addresses and balances with extreme speed.
+                    </p>
+                    <div className="mt-auto flex items-center gap-2 text-md-primary font-bold group-hover:gap-4 transition-all">
+                      Start Exploring <ArrowRight className="w-5 h-5" />
+                    </div>
+                 </div>
+               </Link>
+
+               {/* Bitcoin Card */}
+               <Link
+                 href={mounted ? `/bitcoin/${randomPage}` : '#'}
+                 onMouseDown={addRipple}
+                 className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-yellow-500/30"
+               >
+                 <RippleContainer ripples={ripples} />
+                 <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                    <div className="w-20 h-20 rounded-3xl bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center mb-8 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                      <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center shadow-md-1">
+                        <Key className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <h2 className="text-3xl font-black mb-3">Bitcoin</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs">
+                      Explore the world of Bitcoin with full Legacy, Native SegWit, and Taproot support.
+                    </p>
+                    <div className="mt-auto flex items-center gap-2 text-yellow-600 dark:text-yellow-500 font-bold group-hover:gap-4 transition-all">
+                      Start Exploring <ArrowRight className="w-5 h-5" />
+                    </div>
+                 </div>
+               </Link>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 mt-24">
+
             <div className="md-card p-10 flex flex-col items-center text-center">
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-8 shadow-md-1">
                 <ShieldCheck className="w-7 h-7 text-md-primary" />

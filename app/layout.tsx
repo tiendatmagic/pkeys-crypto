@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pkeys crypto - Ethereum Private Key Explorer",
-  description: "Explore Ethereum private keys and balances with a modern interface.",
+  title: "Pkeys Crypto - Blockchain Private Key Explorer",
+  description: "Explore Ethereum and Bitcoin private keys and balances with a modern interface.",
 };
 
 export default function RootLayout({
