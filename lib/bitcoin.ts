@@ -1,8 +1,8 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { ECPairFactory, ECPairInterface } from 'ecpair';
-import * as ecc from 'tiny-secp256k1';
+import ecc from '@bitcoinerlab/secp256k1';
 
-// Initialize ECPair with tiny-secp256k1
+// Initialize ECPair with bitcoinerlab/secp256k1
 bitcoin.initEccLib(ecc);
 const ECPair = ECPairFactory(ecc);
 
