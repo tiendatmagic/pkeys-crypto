@@ -5,12 +5,13 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Dices, CornerDo
 import Link from 'next/link';
 import { MAX_PAGES } from '@/lib/blockchain';
 import { BTC_MAX_PAGES } from '@/lib/bitcoin';
+import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
 import { SOL_MAX_PAGES } from '@/lib/solana';
 import { useRipple, RippleContainer } from './Ripple';
 
 interface PaginationProps {
   currentPage: bigint;
-  network?: 'ethereum' | 'bitcoin' | 'solana';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash';
 }
 
 export function Pagination({ currentPage, network = 'ethereum' }: PaginationProps) {
@@ -21,9 +22,11 @@ export function Pagination({ currentPage, network = 'ethereum' }: PaginationProp
 
   const maxPages = network === 'ethereum' ? MAX_PAGES : 
                    network === 'bitcoin' ? BTC_MAX_PAGES : 
+                   network === 'bitcoincash' ? BCH_MAX_PAGES :
                    SOL_MAX_PAGES;
   const baseUrl = network === 'ethereum' ? '/ethereum' : 
                   network === 'bitcoin' ? '/bitcoin' : 
+                  network === 'bitcoincash' ? '/bitcoincash' :
                   '/solana';
 
   const prevPage = currentPage > 1n ? currentPage - 1n : 1n;

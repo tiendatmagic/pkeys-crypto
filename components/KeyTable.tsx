@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { indexToPrivateKey, getAddressFromPrivateKey, KEYS_PER_PAGE, RPC_ENDPOINTS, MULTICALL_ADDRESS, MULTICALL_ABI } from '@/lib/blockchain';
 import { BTC_KEYS_PER_PAGE } from '@/lib/bitcoin';
+import { BCH_KEYS_PER_PAGE, deriveBitcoinCashAddresses } from '@/lib/bitcoincash';
 import { SOL_KEYS_PER_PAGE, deriveSolanaAddress, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { KeyRow } from './KeyRow';
 import { ethers } from 'ethers';
@@ -10,7 +11,7 @@ import { Connection, PublicKey } from '@solana/web3.js';
 
 interface KeyTableProps {
   page: bigint;
-  network?: 'ethereum' | 'bitcoin' | 'solana';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash';
 }
 
 export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
@@ -18,7 +19,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
   const [isBatchLoading, setIsBatchLoading] = useState(false);
 
   const provider = useMemo(() => {
-    if (network === 'bitcoin' || network === 'solana') return undefined;
+    if (network === 'bitcoin' || network === 'solana' || network === 'bitcoincash') return undefined;
     const rpc = RPC_ENDPOINTS[Math.floor(Math.random() * RPC_ENDPOINTS.length)];
     return new ethers.JsonRpcProvider(rpc);
   }, [page, network]);
@@ -31,16 +32,18 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
 
   const keysPerPage = network === 'ethereum' ? KEYS_PER_PAGE : 
                       network === 'bitcoin' ? BTC_KEYS_PER_PAGE : 
+                      network === 'bitcoincash' ? BCH_KEYS_PER_PAGE :
                       SOL_KEYS_PER_PAGE;
 
   const keys = useMemo(() => {
     const startRange = (page - 1n) * BigInt(keysPerPage);
     return Array.from({ length: keysPerPage }, (_, i) => {
-      const index = startRange + BigInt(i) + (network === 'bitcoin' ? 1n : 0n);
+      const index = startRange + BigInt(i) + (network === 'bitcoin' || network === 'bitcoincash' ? 1n : 0n);
       const pk = indexToPrivateKey(index);
       let address = '';
       if (network === 'ethereum') address = getAddressFromPrivateKey(pk);
       if (network === 'solana') address = deriveSolanaAddress(pk);
+      if (network === 'bitcoincash') address = deriveBitcoinCashAddresses(pk).cashAddr;
       
       return {
         index,
@@ -139,6 +142,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
             <th className="py-5 px-3 md:px-6 text-[11px] font-bold text-gray-500 uppercase tracking-widest border-b border-gray-100 dark:border-gray-800">
               {network === 'ethereum' ? 'Ethereum Address' : 
                network === 'bitcoin' ? 'Bitcoin Addresses (T: Taproot, S: SegWit, L: Legacy)' : 
+               network === 'bitcoincash' ? 'Bitcoin Cash Addresses (C: CashAddr, L: Legacy)' :
                'Solana Address (Base58)'}
             </th>
           </tr>
