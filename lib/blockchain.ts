@@ -4,9 +4,9 @@ import { ethers } from 'ethers';
  * Converts a large decimal index (as string or bigint) to a 32-byte hex private key.
  */
 export function indexToPrivateKey(index: string | bigint): string {
-    let bigIndex = typeof index === 'string' ? BigInt(index) : index;
+    const bigIndex = typeof index === 'string' ? BigInt(index) : index;
     // Map index 0 to 0x...00
-    let hex = bigIndex.toString(16).padStart(64, '0');
+    const hex = bigIndex.toString(16).padStart(64, '0');
     return '0x' + hex;
 }
 

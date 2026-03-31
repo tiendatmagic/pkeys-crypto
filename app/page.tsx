@@ -9,15 +9,14 @@ import { MAX_PAGES } from '@/lib/blockchain';
 import { BTC_MAX_PAGES } from '@/lib/bitcoin';
 import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
 import { LTC_MAX_PAGES } from '@/lib/litecoin';
+import { TON_MAX_PAGES } from '@/lib/ton';
 import { SOL_MAX_PAGES } from '@/lib/solana';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
-  const [randomPage, setRandomPage] = useState<bigint>(1n);
-  const [randomBtcPage, setRandomBtcPage] = useState<bigint>(1n);
-  const [randomBchPage, setRandomBchPage] = useState<bigint>(1n);
-  const [randomLtcPage, setRandomLtcPage] = useState<bigint>(1n);
-  const [randomSolPage, setRandomSolPage] = useState<bigint>(1n);
+  const [randomPages, setRandomPages] = useState<Record<string, bigint>>({
+    eth: 1n, btc: 1n, bch: 1n, ltc: 1n, ton: 1n, sol: 1n
+  });
   const { ripples, addRipple } = useRipple();
 
   useEffect(() => {
@@ -26,12 +25,14 @@ export default function Home() {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
-    
-    setRandomPage((BigInt('0x' + hex) % MAX_PAGES) + 1n);
-    setRandomBtcPage((BigInt('0x' + hex) % BTC_MAX_PAGES) + 1n);
-    setRandomBchPage((BigInt('0x' + hex) % BCH_MAX_PAGES) + 1n);
-    setRandomLtcPage((BigInt('0x' + hex) % LTC_MAX_PAGES) + 1n);
-    setRandomSolPage((BigInt('0x' + hex) % SOL_MAX_PAGES) + 1n);
+    setRandomPages({
+      eth: (BigInt('0x' + hex) % MAX_PAGES) + 1n,
+      btc: (BigInt('0x' + hex) % BTC_MAX_PAGES) + 1n,
+      bch: (BigInt('0x' + hex) % BCH_MAX_PAGES) + 1n,
+      ltc: (BigInt('0x' + hex) % LTC_MAX_PAGES) + 1n,
+      ton: (BigInt('0x' + hex) % TON_MAX_PAGES) + 1n,
+      sol: (BigInt('0x' + hex) % SOL_MAX_PAGES) + 1n,
+    });
   }, []);
 
   return (
@@ -50,10 +51,10 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-24 max-w-none px-0">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-24 max-w-none px-0 font-sans">
                 {/* Ethereum Card */}
                <Link
-                 href={mounted ? `/ethereum/${randomPage}` : '#'}
+                 href={mounted ? `/ethereum/${randomPages.eth}` : '#'}
                  onMouseDown={addRipple}
                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-md-primary/30"
                >
@@ -76,7 +77,7 @@ export default function Home() {
 
                 {/* Bitcoin Card */}
                <Link
-                 href={mounted ? `/bitcoin/${randomBtcPage}` : '#'}
+                 href={mounted ? `/bitcoin/${randomPages.btc}` : '#'}
                  onMouseDown={addRipple}
                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-yellow-500/30"
                >
@@ -99,7 +100,7 @@ export default function Home() {
 
                 {/* Bitcoin Cash Card */}
                 <Link
-                  href={mounted ? `/bitcoincash/${randomBchPage}` : '#'}
+                  href={mounted ? `/bitcoincash/${randomPages.bch}` : '#'}
                   onMouseDown={addRipple}
                   className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-green-500/30"
                 >
@@ -122,7 +123,7 @@ export default function Home() {
 
                 {/* Litecoin Card */}
                 <Link
-                  href={mounted ? `/litecoin/${randomLtcPage}` : '#'}
+                  href={mounted ? `/litecoin/${randomPages.ltc}` : '#'}
                   onMouseDown={addRipple}
                   className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-blue-500/30"
                 >
@@ -143,7 +144,7 @@ export default function Home() {
 
                {/* Solana Card */}
                <Link
-                 href={mounted ? `/solana/${randomSolPage}` : '#'}
+                 href={mounted ? `/solana/${randomPages.sol}` : '#'}
                  onMouseDown={addRipple}
                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-purple-500/30"
                >
@@ -156,11 +157,32 @@ export default function Home() {
                     </div>
                     <h2 className="text-2xl font-black mb-3">Solana</h2>
                     <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                      Explore Ed25519 based Solana addresses.
+                      Explore Solana addresses.
                     </p>
                      <div className="mt-auto flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-sm group-hover:gap-3 transition-all">
                        Explore <ArrowRight className="w-4 h-4" />
                      </div>
+                  </div>
+                </Link>
+
+                {/* TON Card */}
+                <Link
+                  href={mounted ? `/ton/${randomPages.ton}` : '#'}
+                  onMouseDown={addRipple}
+                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-cyan-500/30"
+                >
+                  <RippleContainer ripples={ripples} />
+                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-cyan-50 dark:bg-cyan-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500 font-sans">
+                       <span className="text-2xl font-bold text-cyan-600 dark:text-cyan-400">💎</span>
+                    </div>
+                    <h2 className="text-2xl font-black mb-3">TON</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Explore TON (V4R2) addresses.
+                    </p>
+                    <div className="mt-auto flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-bold text-sm group-hover:gap-3 transition-all">
+                      Explore <ArrowRight className="w-4 h-4" />
+                    </div>
                   </div>
                 </Link>
            </div>

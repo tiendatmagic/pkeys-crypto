@@ -9,6 +9,9 @@ const nextConfig = {
             stream: require.resolve('stream-browserify'),
             crypto: require.resolve('crypto-browserify'),
             process: require.resolve('process/browser'),
+            fs: false,
+            net: false,
+            tls: false,
         };
         config.plugins.push(
             new webpack.ProvidePlugin({

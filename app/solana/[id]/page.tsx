@@ -14,40 +14,40 @@ interface PageProps {
 export default async function SolanaPage({ params }: PageProps) {
   const { id } = await params;
 
-  let page: bigint;
   try {
-    page = BigInt(id);
+    const page = BigInt(id);
     if (page < 1n || page > SOL_MAX_PAGES) {
       return notFound();
     }
-  } catch (e) {
+  } catch {
     return notFound();
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+    <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
       <Header />
-
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-4xl mx-auto text-center mb-12">
-          <h1 className="text-4xl font-extrabold mb-4 tracking-tight">
+      
+      <main className="container mx-auto px-4 py-16 md:py-24">
+        <div className="max-w-4xl mx-auto text-center mb-16">
+          <h1 className="text-4xl md:text-5xl font-black mb-6 tracking-tight bg-gradient-to-tr from-purple-600 to-green-500 bg-clip-text text-transparent">
             Solana Private Keys
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Exploring the vast universe of Solana keys. 
-            Solana uses Ed25519 derivation from 32-byte seeds.
-            There are 2<sup>256</sup> keys represented as <span className="break-all font-mono text-sm opacity-80">{SOL_MAX_PAGES.toString()}</span> pages.
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Exploring the Ed25519 universe. Every page reveals 256 unique Solana addresses derived from 32-byte seeds. 
+            Total pages: <span className="break-all font-mono text-sm opacity-80">{SOL_MAX_PAGES.toString()}</span>
           </p>
         </div>
 
         <Diagnostics network="solana" />
+        
+        <Pagination currentPage={id} network="solana" />
 
-        <Pagination currentPage={page} network="solana" />
+        <div className="mt-12">
+          <KeyTable page={id} network="solana" />
+        </div>
 
-        <KeyTable page={page} network="solana" />
-
-        <div className="mt-8">
-          <Pagination currentPage={page} network="solana" />
+        <div className="mt-12">
+          <Pagination currentPage={id} network="solana" />
         </div>
       </main>
 

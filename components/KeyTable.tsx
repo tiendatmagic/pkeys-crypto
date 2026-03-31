@@ -6,16 +6,18 @@ import { BTC_KEYS_PER_PAGE } from '@/lib/bitcoin';
 import { BCH_KEYS_PER_PAGE, deriveBitcoinCashAddresses } from '@/lib/bitcoincash';
 import { LTC_KEYS_PER_PAGE, deriveLitecoinAddresses } from '@/lib/litecoin';
 import { SOL_KEYS_PER_PAGE, deriveSolanaAddress, SOL_RPC_ENDPOINTS } from '@/lib/solana';
+import { TON_KEYS_PER_PAGE, deriveTonAddress } from '@/lib/ton';
 import { KeyRow } from './KeyRow';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 interface KeyTableProps {
-  page: bigint;
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
+  page: string;
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
 }
 
 export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
+  const pageBigInt = BigInt(page);
   const [balances, setBalances] = useState<Record<string, string | null>>({});
   const [isBatchLoading, setIsBatchLoading] = useState(false);
 
@@ -23,22 +25,23 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
     if (network === 'bitcoin' || network === 'solana' || network === 'bitcoincash' || network === 'litecoin') return undefined;
     const rpc = RPC_ENDPOINTS[Math.floor(Math.random() * RPC_ENDPOINTS.length)];
     return new ethers.JsonRpcProvider(rpc);
-  }, [page, network]);
+  }, [pageBigInt, network]);
 
   const solanaConnection = useMemo(() => {
     if (network !== 'solana') return undefined;
     const rpc = SOL_RPC_ENDPOINTS[Math.floor(Math.random() * SOL_RPC_ENDPOINTS.length)];
     return new Connection(rpc, 'confirmed');
-  }, [page, network]);
+  }, [pageBigInt, network]);
 
   const keysPerPage = network === 'ethereum' ? KEYS_PER_PAGE : 
                       network === 'bitcoin' ? BTC_KEYS_PER_PAGE : 
                       network === 'bitcoincash' ? BCH_KEYS_PER_PAGE :
                       network === 'litecoin' ? LTC_KEYS_PER_PAGE :
+                      network === 'ton' ? TON_KEYS_PER_PAGE :
                       SOL_KEYS_PER_PAGE;
 
   const keys = useMemo(() => {
-    const startRange = (page - 1n) * BigInt(keysPerPage);
+    const startRange = (pageBigInt - 1n) * BigInt(keysPerPage);
     return Array.from({ length: keysPerPage }, (_, i) => {
       const index = startRange + BigInt(i) + (network === 'bitcoin' || network === 'bitcoincash' || network === 'litecoin' ? 1n : 0n);
       const pk = indexToPrivateKey(index);
@@ -47,6 +50,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
       if (network === 'solana') address = deriveSolanaAddress(pk);
       if (network === 'bitcoincash') address = deriveBitcoinCashAddresses(pk).cashAddr;
       if (network === 'litecoin') address = deriveLitecoinAddresses(pk).segwit;
+      if (network === 'ton') address = deriveTonAddress(pk).nonBounceable;
       
       return {
         index,
@@ -54,7 +58,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
         address
       };
     });
-  }, [page, network, keysPerPage]);
+  }, [pageBigInt, network, keysPerPage]);
 
   useEffect(() => {
     if (network === 'ethereum' && provider) {
@@ -147,6 +151,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
                network === 'bitcoin' ? 'Bitcoin Addresses (T: Taproot, S: SegWit, L: Legacy)' : 
                network === 'bitcoincash' ? 'Bitcoin Cash Addresses (C: CashAddr, L: Legacy)' :
                network === 'litecoin' ? 'Litecoin Addresses (T: Taproot, S: SegWit, L: Legacy)' :
+               network === 'ton' ? 'TON Addresses' :
                'Solana Address (Base58)'}
             </th>
           </tr>

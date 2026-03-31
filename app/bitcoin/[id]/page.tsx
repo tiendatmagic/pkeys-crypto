@@ -14,13 +14,12 @@ interface PageProps {
 export default async function BitcoinPage({ params }: PageProps) {
   const { id } = await params;
 
-  let page: bigint;
   try {
-    page = BigInt(id);
+    const page = BigInt(id);
     if (page < 1n || page > BTC_MAX_PAGES) {
       return notFound();
     }
-  } catch (e) {
+  } catch {
     return notFound();
   }
 
@@ -41,12 +40,14 @@ export default async function BitcoinPage({ params }: PageProps) {
 
         <Diagnostics network="bitcoin" />
 
-        <Pagination currentPage={page} network="bitcoin" />
-
-        <KeyTable page={page} network="bitcoin" />
+        <Pagination currentPage={id} network="bitcoin" />
 
         <div className="mt-8">
-          <Pagination currentPage={page} network="bitcoin" />
+          <KeyTable page={id} network="bitcoin" />
+        </div>
+
+        <div className="mt-8">
+          <Pagination currentPage={id} network="bitcoin" />
         </div>
       </main>
 

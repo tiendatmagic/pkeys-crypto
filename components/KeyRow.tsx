@@ -6,9 +6,10 @@ import { deriveBitcoinAddresses, getBitcoinBalance } from '@/lib/bitcoin';
 import { deriveBitcoinCashAddresses, getBitcoinCashBalance } from '@/lib/bitcoincash';
 import { deriveLitecoinAddresses, getLitecoinBalance } from '@/lib/litecoin';
 import { deriveSolanaAddress, getSolanaBalance } from '@/lib/solana';
+import { deriveTonAddress, getTonBalance } from '@/lib/ton';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
-import { ExternalLink, Copy, Check, Info } from 'lucide-react';
+import { ExternalLink, Copy, Check } from 'lucide-react';
 import { useToast } from './Toast';
 
 interface KeyRowProps {
@@ -18,121 +19,125 @@ interface KeyRowProps {
   initialBalance?: string | null;
   provider?: ethers.JsonRpcProvider;
   solanaConnection?: Connection;
-  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
+  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
+}
+
+interface AddressesState {
+    eth?: string;
+    sol?: string;
+    btc?: { legacy: string, segwit: string, taproot: string };
+    bch?: { legacy: string, cashAddr: string };
+    ltc?: { legacy: string, segwit: string, nativeSegwit: string, taproot: string };
+    ton?: { bounceable: string, nonBounceable: string, raw: string };
 }
 
 export function KeyRow({ index, privateKey, initialAddress, initialBalance, provider, solanaConnection, network }: KeyRowProps) {
+  // Consolidate address state to prevent cascading renders
   const [address, setAddress] = useState(initialAddress || '');
-  const [btcAddresses, setBtcAddresses] = useState<{ legacy: string, segwit: string, taproot: string } | null>(null);
-  const [bchAddresses, setBchAddresses] = useState<{ legacy: string, cashAddr: string } | null>(null);
-  const [ltcAddresses, setLtcAddresses] = useState<{ legacy: string, segwit: string, nativeSegwit: string, taproot: string } | null>(null);
+  const [addresses, setAddresses] = useState<AddressesState>({});
+  
   const [balance, setBalance] = useState<string | null>(initialBalance || null);
   const [btcBalances, setBtcBalances] = useState<{ legacy: string | null, segwit: string | null, taproot: string | null }>({ legacy: null, segwit: null, taproot: null });
   const [bchBalances, setBchBalances] = useState<{ legacy: string | null, cashAddr: string | null }>({ legacy: null, cashAddr: null });
   const [ltcBalances, setLtcBalances] = useState<{ legacy: string | null, segwit: string | null, nativeSegwit: string | null, taproot: string | null }>({ legacy: null, segwit: null, nativeSegwit: null, taproot: null });
+  const [tonBalances, setTonBalances] = useState<{ nonBounceable: string | null, bounceable: string | null }>({ nonBounceable: null, bounceable: null });
+  
   const [isError, setIsError] = useState(false);
-  const [copied, setCopied] = useState<'pk' | 'addr' | 'addr-segwit' | 'addr-taproot' | null>(null);
+  const [copied, setCopied] = useState<'pk' | 'addr' | 'addr-segwit' | 'addr-taproot' | 'addr-bounceable' | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const { showToast } = useToast();
 
   useEffect(() => {
+    const newAddresses: AddressesState = {};
+    let mainAddr = '';
+
     if (network === 'ethereum') {
-      if (initialAddress) {
-        setAddress(initialAddress);
-      } else {
-        setAddress(getAddressFromPrivateKey(privateKey));
-      }
+      mainAddr = initialAddress || getAddressFromPrivateKey(privateKey);
+      newAddresses.eth = mainAddr;
     } else if (network === 'bitcoin') {
       const btc = deriveBitcoinAddresses(privateKey);
-      setBtcAddresses(btc);
-      setAddress(btc.segwit); // Default to SegWit
+      newAddresses.btc = btc;
+      mainAddr = btc.segwit;
     } else if (network === 'bitcoincash') {
       const bch = deriveBitcoinCashAddresses(privateKey);
-      setBchAddresses(bch);
-      setAddress(bch.cashAddr);
+      newAddresses.bch = bch;
+      mainAddr = bch.cashAddr;
     } else if (network === 'litecoin') {
       const ltc = deriveLitecoinAddresses(privateKey);
-      setLtcAddresses(ltc);
-      setAddress(ltc.segwit); // Default to SegWit
+      newAddresses.ltc = ltc;
+      mainAddr = ltc.segwit;
+    } else if (network === 'ton') {
+      const ton = deriveTonAddress(privateKey);
+      newAddresses.ton = ton;
+      mainAddr = ton.nonBounceable;
     } else if (network === 'solana') {
-      setAddress(deriveSolanaAddress(privateKey));
+      mainAddr = deriveSolanaAddress(privateKey);
+      newAddresses.sol = mainAddr;
     }
+    
+    setAddress(mainAddr);
+    setAddresses(newAddresses);
   }, [privateKey, initialAddress, network]);
 
   useEffect(() => {
     if (initialBalance !== undefined) {
-      if (network === 'ethereum' || network === 'solana' || (network === 'bitcoincash' && initialBalance !== null) || (network === 'litecoin' && initialBalance !== null)) {
+      if (network === 'ethereum' || network === 'solana' || (network === 'bitcoincash' && initialBalance !== null) || (network === 'litecoin' && initialBalance !== null) || (network === 'ton' && initialBalance !== null)) {
         setBalance(initialBalance);
       }
       setIsError(initialBalance === null);
     }
   }, [initialBalance, network]);
 
-  const fetchBalance = async (addr: string, type: 'eth' | 'btc-legacy' | 'btc-segwit' | 'btc-taproot' | 'solana' | 'bch-legacy' | 'bch-cash' | 'ltc-legacy' | 'ltc-segwit' | 'ltc-native' | 'ltc-taproot') => {
+  const fetchBalance = async (addr: string, type: string) => {
     setIsFetching(true);
     setIsError(false);
     
-    if (type === 'eth' && provider) {
-      const bal = await getBalance(addr, provider);
-      if (bal === null) {
-        setIsError(true);
-      } else {
-        setBalance(bal);
-      }
-    } else if (type === 'solana') {
-      const bal = await getSolanaBalance(addr);
-      if (bal === null) {
-        setIsError(true);
-      } else {
-        setBalance(bal);
-      }
-    } else if (type.startsWith('bch')) {
-      const bal = await getBitcoinCashBalance(addr);
-      if (bal === null) {
-        setIsError(true);
-      } else {
-        if (type === 'bch-legacy') {
-          setBchBalances(prev => ({ ...prev, legacy: bal }));
-        } else {
-          setBchBalances(prev => ({ ...prev, cashAddr: bal }));
-          setBalance(bal);
+    try {
+      if (type === 'eth' && provider) {
+        const bal = await getBalance(addr, provider);
+        if (bal === null) setIsError(true); else setBalance(bal);
+      } else if (type === 'solana') {
+        const bal = await getSolanaBalance(addr);
+        if (bal === null) setIsError(true); else setBalance(bal);
+      } else if (type.startsWith('bch')) {
+        const bal = await getBitcoinCashBalance(addr);
+        if (bal === null) setIsError(true);
+        else {
+          if (type === 'bch-legacy') setBchBalances(prev => ({ ...prev, legacy: bal }));
+          else { setBchBalances(prev => ({ ...prev, cashAddr: bal })); setBalance(bal); }
+        }
+      } else if (type.startsWith('ltc')) {
+        const bal = await getLitecoinBalance(addr);
+        if (bal === null) setIsError(true);
+        else {
+          if (type === 'ltc-legacy') setLtcBalances(prev => ({ ...prev, legacy: bal }));
+          else if (type === 'ltc-segwit') { setLtcBalances(prev => ({ ...prev, segwit: bal })); setBalance(bal); }
+          else if (type === 'ltc-native') setLtcBalances(prev => ({ ...prev, nativeSegwit: bal }));
+          else setLtcBalances(prev => ({ ...prev, taproot: bal }));
+        }
+      } else if (type.startsWith('btc')) {
+        const bal = await getBitcoinBalance(addr);
+        if (bal === null) setIsError(true);
+        else {
+          if (type === 'btc-legacy') setBtcBalances(prev => ({ ...prev, legacy: bal }));
+          else if (type === 'btc-segwit') { setBtcBalances(prev => ({ ...prev, segwit: bal })); setBalance(bal); }
+          else setBtcBalances(prev => ({ ...prev, taproot: bal }));
+        }
+      } else if (type === 'ton-non' || type === 'ton-bounce') {
+        const bal = await getTonBalance(addr);
+        if (bal === null) setIsError(true);
+        else {
+          if (type === 'ton-non') { setTonBalances(prev => ({ ...prev, nonBounceable: bal })); setBalance(bal); }
+          else setTonBalances(prev => ({ ...prev, bounceable: bal }));
         }
       }
-    } else if (type.startsWith('ltc')) {
-      const bal = await getLitecoinBalance(addr);
-      if (bal === null) {
-        setIsError(true);
-      } else {
-        if (type === 'ltc-legacy') {
-          setLtcBalances(prev => ({ ...prev, legacy: bal }));
-        } else if (type === 'ltc-segwit') {
-          setLtcBalances(prev => ({ ...prev, segwit: bal }));
-          setBalance(bal);
-        } else if (type === 'ltc-native') {
-          setLtcBalances(prev => ({ ...prev, nativeSegwit: bal }));
-        } else {
-          setLtcBalances(prev => ({ ...prev, taproot: bal }));
-        }
-      }
-    } else if (type.startsWith('btc')) {
-      const bal = await getBitcoinBalance(addr);
-      if (bal === null) {
-        setIsError(true);
-      } else {
-        if (type === 'btc-legacy') {
-          setBtcBalances(prev => ({ ...prev, legacy: bal }));
-        } else if (type === 'btc-segwit') {
-          setBtcBalances(prev => ({ ...prev, segwit: bal }));
-          setBalance(bal);
-        } else {
-          setBtcBalances(prev => ({ ...prev, taproot: bal }));
-        }
-      }
+    } catch {
+      setIsError(true);
     }
     setIsFetching(false);
   };
 
-  const copyToClipboard = (text: string, type: 'pk' | 'addr' | 'addr-segwit' | 'addr-taproot') => {
+  const copyToClipboard = (text: string, type: 'pk' | 'addr' | 'addr-segwit' | 'addr-taproot' | 'addr-bounceable') => {
     navigator.clipboard.writeText(text);
     setCopied(type);
     showToast(`${type === 'pk' ? 'Private key' : 'Address'} copied to clipboard!`);
@@ -151,6 +156,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                          network === 'bitcoin' ? 'BTC' : 
                          network === 'bitcoincash' ? 'BCH' :
                          network === 'litecoin' ? 'LTC' :
+                         network === 'ton' ? 'TON' :
                          'SOL';
 
   return (
@@ -172,28 +178,51 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
             {formatDisplayBalance(balance)}
             <span className={`ml-1 ${balance && parseFloat(balance) > 0 ? '' : 'opacity-50'}`}>{currencySymbol}</span>
           </div>
+        ) : network === 'ton' ? (
+          <div className="flex flex-col gap-1.5">
+            <div 
+              onClick={() => !isFetching && addresses.ton && fetchBalance(addresses.ton.nonBounceable, 'ton-non')}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
+                tonBalances.nonBounceable && parseFloat(tonBalances.nonBounceable) > 0 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
+              } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
+            >
+              {formatDisplayBalance(tonBalances.nonBounceable)}
+              <span className="ml-1 opacity-50">U</span>
+            </div>
+            <div 
+              onClick={() => !isFetching && addresses.ton && fetchBalance(addresses.ton.bounceable, 'ton-bounce')}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
+                tonBalances.bounceable && parseFloat(tonBalances.bounceable) > 0 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
+              } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
+            >
+              {formatDisplayBalance(tonBalances.bounceable)}
+              <span className="ml-1 opacity-50">E</span>
+            </div>
+          </div>
         ) : network === 'bitcoincash' ? (
           <div className="flex flex-col gap-1.5">
             <div 
-              onClick={() => !isFetching && bchAddresses && fetchBalance(bchAddresses.cashAddr, 'bch-cash')}
+              onClick={() => !isFetching && addresses.bch && fetchBalance(addresses.bch.cashAddr, 'bch-cash')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 bchBalances.cashAddr && parseFloat(bchBalances.cashAddr) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="CashAddr Balance"
             >
               {formatDisplayBalance(bchBalances.cashAddr)}
               <span className="ml-1 opacity-50">C</span>
             </div>
             <div 
-              onClick={() => !isFetching && bchAddresses && fetchBalance(bchAddresses.legacy, 'bch-legacy')}
+              onClick={() => !isFetching && addresses.bch && fetchBalance(addresses.bch.legacy, 'bch-legacy')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 bchBalances.legacy && parseFloat(bchBalances.legacy) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="Legacy Balance"
             >
               {formatDisplayBalance(bchBalances.legacy)}
               <span className="ml-1 opacity-50">L</span>
@@ -202,25 +231,23 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         ) : network === 'litecoin' ? (
           <div className="flex flex-col gap-1.5">
             <div 
-              onClick={() => !isFetching && ltcAddresses && fetchBalance(ltcAddresses.segwit, 'ltc-segwit')}
+              onClick={() => !isFetching && addresses.ltc && fetchBalance(addresses.ltc.segwit, 'ltc-segwit')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 ltcBalances.segwit && parseFloat(ltcBalances.segwit) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="SegWit Balance"
             >
               {formatDisplayBalance(ltcBalances.segwit)}
               <span className="ml-1 opacity-50">S</span>
             </div>
             <div 
-              onClick={() => !isFetching && ltcAddresses && fetchBalance(ltcAddresses.legacy, 'ltc-legacy')}
+              onClick={() => !isFetching && addresses.ltc && fetchBalance(addresses.ltc.legacy, 'ltc-legacy')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 ltcBalances.legacy && parseFloat(ltcBalances.legacy) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="Legacy Balance"
             >
               {formatDisplayBalance(ltcBalances.legacy)}
               <span className="ml-1 opacity-50">L</span>
@@ -229,37 +256,34 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         ) : (
           <div className="flex flex-col gap-1.5">
             <div 
-              onClick={() => !isFetching && btcAddresses && fetchBalance(btcAddresses.taproot, 'btc-taproot')}
+              onClick={() => !isFetching && addresses.btc && fetchBalance(addresses.btc.taproot, 'btc-taproot')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 btcBalances.taproot && parseFloat(btcBalances.taproot) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="Taproot Balance"
             >
               {formatDisplayBalance(btcBalances.taproot)}
               <span className="ml-1 opacity-50">T</span>
             </div>
             <div 
-              onClick={() => !isFetching && btcAddresses && fetchBalance(btcAddresses.segwit, 'btc-segwit')}
+              onClick={() => !isFetching && addresses.btc && fetchBalance(addresses.btc.segwit, 'btc-segwit')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 btcBalances.segwit && parseFloat(btcBalances.segwit) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="Native SegWit Balance"
             >
               {formatDisplayBalance(btcBalances.segwit)}
               <span className="ml-1 opacity-50">S</span>
             </div>
             <div 
-              onClick={() => !isFetching && btcAddresses && fetchBalance(btcAddresses.legacy, 'btc-legacy')}
+              onClick={() => !isFetching && addresses.btc && fetchBalance(addresses.btc.legacy, 'btc-legacy')}
               className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
                 btcBalances.legacy && parseFloat(btcBalances.legacy) > 0 
                     ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
                     : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
               } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
-              title="Legacy Balance"
             >
               {formatDisplayBalance(btcBalances.legacy)}
               <span className="ml-1 opacity-50">L</span>
@@ -303,21 +327,64 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                   </a>
               </div>
           </div>
-        ) : network === 'bitcoincash' ? (
+        ) : network === 'ton' ? (
           <div className="flex flex-col gap-3">
              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-gray-400 w-4">C</span>
-                <span className="text-green-600 dark:text-green-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={bchAddresses?.cashAddr}>
-                  {bchAddresses?.cashAddr}
+                <span className="text-[10px] font-bold text-gray-400 w-4">U</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.ton?.nonBounceable}>
+                  {addresses.ton?.nonBounceable}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(bchAddresses?.cashAddr || '', 'addr')}
+                    onClick={() => copyToClipboard(addresses.ton?.nonBounceable || '', 'addr')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/bitcoin-cash/address/${bchAddresses?.cashAddr}`} 
+                    href={`https://tonscan.org/address/${addresses.ton?.nonBounceable}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
+                >
+                    <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 w-4">E</span>
+                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.ton?.bounceable}>
+                  {addresses.ton?.bounceable}
+                </span>
+                <button 
+                    onClick={() => copyToClipboard(addresses.ton?.bounceable || '', 'addr-bounceable')}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
+                >
+                    {copied === 'addr-bounceable' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
+                </button>
+                <a 
+                    href={`https://tonscan.org/address/${addresses.ton?.bounceable}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
+                >
+                    <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+             </div>
+          </div>
+        ) : network === 'bitcoincash' ? (
+          <div className="flex flex-col gap-3">
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 w-4">C</span>
+                <span className="text-green-600 dark:text-green-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.bch?.cashAddr}>
+                  {addresses.bch?.cashAddr}
+                </span>
+                <button 
+                    onClick={() => copyToClipboard(addresses.bch?.cashAddr || '', 'addr')}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
+                >
+                    {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
+                </button>
+                <a 
+                    href={`https://blockchair.com/bitcoin-cash/address/${addresses.bch?.cashAddr}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-green-500"
@@ -327,17 +394,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
              </div>
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">L</span>
-                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={bchAddresses?.legacy}>
-                  {bchAddresses?.legacy}
+                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.bch?.legacy}>
+                  {addresses.bch?.legacy}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(bchAddresses?.legacy || '', 'addr')}
+                    onClick={() => copyToClipboard(addresses.bch?.legacy || '', 'addr')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/bitcoin-cash/address/${bchAddresses?.legacy}`} 
+                    href={`https://blockchair.com/bitcoin-cash/address/${addresses.bch?.legacy}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-green-500"
@@ -350,17 +417,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
           <div className="flex flex-col gap-3">
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">S</span>
-                <span className="text-blue-600 dark:text-blue-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={ltcAddresses?.segwit}>
-                  {ltcAddresses?.segwit}
+                <span className="text-blue-600 dark:text-blue-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.ltc?.segwit}>
+                  {addresses.ltc?.segwit}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(ltcAddresses?.segwit || '', 'addr')}
+                    onClick={() => copyToClipboard(addresses.ltc?.segwit || '', 'addr')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/litecoin/address/${ltcAddresses?.segwit}`} 
+                    href={`https://blockchair.com/litecoin/address/${addresses.ltc?.segwit}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
@@ -370,17 +437,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
              </div>
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">L</span>
-                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={ltcAddresses?.legacy}>
-                  {ltcAddresses?.legacy}
+                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.ltc?.legacy}>
+                  {addresses.ltc?.legacy}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(ltcAddresses?.legacy || '', 'addr')}
+                    onClick={() => copyToClipboard(addresses.ltc?.legacy || '', 'addr')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/litecoin/address/${ltcAddresses?.legacy}`} 
+                    href={`https://blockchair.com/litecoin/address/${addresses.ltc?.legacy}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
@@ -394,17 +461,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
             {/* Taproot */}
             <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">T</span>
-                <span className="text-md-primary dark:text-primary-light text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={btcAddresses?.taproot}>
-                  {btcAddresses?.taproot}
+                <span className="text-md-primary dark:text-primary-light text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.btc?.taproot}>
+                  {addresses.btc?.taproot}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(btcAddresses?.taproot || '', 'addr-taproot')}
+                    onClick={() => copyToClipboard(addresses.btc?.taproot || '', 'addr-taproot')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr-taproot' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/bitcoin/address/${btcAddresses?.taproot}`} 
+                    href={`https://blockchair.com/bitcoin/address/${addresses.btc?.taproot}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-md-primary"
@@ -415,17 +482,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
              {/* SegWit */}
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">S</span>
-                <span className="text-gray-600 dark:text-gray-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={btcAddresses?.segwit}>
-                  {btcAddresses?.segwit}
+                <span className="text-gray-600 dark:text-gray-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.btc?.segwit}>
+                  {addresses.btc?.segwit}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(btcAddresses?.segwit || '', 'addr-segwit')}
+                    onClick={() => copyToClipboard(addresses.btc?.segwit || '', 'addr-segwit')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr-segwit' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/bitcoin/address/${btcAddresses?.segwit}`} 
+                    href={`https://blockchair.com/bitcoin/address/${addresses.btc?.segwit}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-md-primary"
@@ -436,17 +503,17 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
              {/* Legacy */}
              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-gray-400 w-4">L</span>
-                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={btcAddresses?.legacy}>
-                  {btcAddresses?.legacy}
+                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={addresses.btc?.legacy}>
+                  {addresses.btc?.legacy}
                 </span>
                 <button 
-                    onClick={() => copyToClipboard(btcAddresses?.legacy || '', 'addr')}
+                    onClick={() => copyToClipboard(addresses.btc?.legacy || '', 'addr')}
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
                 >
                     {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
                 </button>
                 <a 
-                    href={`https://blockchair.com/bitcoin/address/${btcAddresses?.legacy}`} 
+                    href={`https://blockchair.com/bitcoin/address/${addresses.btc?.legacy}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-md-primary"

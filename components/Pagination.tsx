@@ -7,15 +7,17 @@ import { MAX_PAGES } from '@/lib/blockchain';
 import { BTC_MAX_PAGES } from '@/lib/bitcoin';
 import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
 import { LTC_MAX_PAGES } from '@/lib/litecoin';
+import { TON_MAX_PAGES } from '@/lib/ton';
 import { SOL_MAX_PAGES } from '@/lib/solana';
 import { useRipple, RippleContainer } from './Ripple';
 
 interface PaginationProps {
-  currentPage: bigint;
-  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
+  currentPage: string;
+  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
 }
 
 export function Pagination({ currentPage, network = 'ethereum' }: PaginationProps) {
+  const currentBigPage = BigInt(currentPage);
   const [mounted, setMounted] = useState(false);
   const [randomPage, setRandomPage] = useState<bigint>(1n);
   const { ripples: navRipples, addRipple: addNavRipple } = useRipple();
@@ -25,11 +27,12 @@ export function Pagination({ currentPage, network = 'ethereum' }: PaginationProp
                    network === 'bitcoin' ? BTC_MAX_PAGES : 
                    network === 'bitcoincash' ? BCH_MAX_PAGES :
                    network === 'litecoin' ? LTC_MAX_PAGES :
+                   network === 'ton' ? TON_MAX_PAGES :
                    SOL_MAX_PAGES;
   const baseUrl = network === 'ethereum' ? '/ethereum' : `/${network}`;
 
-  const prevPage = currentPage > 1n ? currentPage - 1n : 1n;
-  const nextPage = currentPage < maxPages ? currentPage + 1n : maxPages;
+  const prevPage = currentBigPage > 1n ? currentBigPage - 1n : 1n;
+  const nextPage = currentBigPage < maxPages ? currentBigPage + 1n : maxPages;
 
   useEffect(() => {
     setMounted(true);

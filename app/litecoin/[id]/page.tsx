@@ -14,13 +14,12 @@ interface PageProps {
 export default async function LitecoinPage({ params }: PageProps) {
   const { id } = await params;
 
-  let pageId: bigint;
   try {
-    pageId = BigInt(id);
-    if (pageId < 1n || pageId > LTC_MAX_PAGES) {
+    const page = BigInt(id);
+    if (page < 1n || page > LTC_MAX_PAGES) {
       return notFound();
     }
-  } catch (e) {
+  } catch {
     return notFound();
   }
 
@@ -35,21 +34,21 @@ export default async function LitecoinPage({ params }: PageProps) {
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
             Exploring the vast universe of Litecoin keys. 
-            Litecoin uses the same secp256k1 derivation as Bitcoin but with different network parameters.
+            Litecoin uses Legacy, SegWit, and Taproot derivation formats.
             There are 2<sup>256</sup> keys represented as <span className="break-all font-mono text-sm opacity-80">{LTC_MAX_PAGES.toString()}</span> pages.
           </p>
         </div>
 
         <Diagnostics network="litecoin" />
         
-        <Pagination currentPage={pageId} network="litecoin" />
+        <Pagination currentPage={id} network="litecoin" />
 
         <div className="mt-8">
-          <KeyTable page={pageId} network="litecoin" />
+          <KeyTable page={id} network="litecoin" />
         </div>
 
         <div className="mt-8">
-          <Pagination currentPage={pageId} network="litecoin" />
+          <Pagination currentPage={id} network="litecoin" />
         </div>
       </main>
 

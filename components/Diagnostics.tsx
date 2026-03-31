@@ -6,11 +6,12 @@ import { getBitcoinBalance } from '@/lib/bitcoin';
 import { getSolanaBalance, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { getBitcoinCashBalance } from '@/lib/bitcoincash';
 import { getLitecoinBalance } from '@/lib/litecoin';
+import { getTonBalance } from '@/lib/ton';
 import { ethers } from 'ethers';
 import { ShieldCheck, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DiagnosticsProps {
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
 }
 
 export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
@@ -22,6 +23,8 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     ? 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a' // Known address
     : network === 'litecoin'
     ? 'LhRjN4R8itxZ7Xf52Xf52Xf52Xf52Xf52X' // Known address
+    : network === 'ton'
+    ? 'EQA277ad8-3404-45fe-926f-897d01566cae' // Replace with a real one
     : '4zvwRjXUKGivpXN912D8Aht8q7KbcF74HphgmoCtajSs'; // Seed 0 address
 
   const [address, setAddress] = useState(defaultAddress);
@@ -51,7 +54,7 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
         } else {
           setStatus('error');
         }
-      } catch (e) {
+      } catch {
         setStatus('error');
       }
     } else if (network === 'solana') {
@@ -65,7 +68,20 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
         } else {
           setStatus('error');
         }
-      } catch (e) {
+      } catch {
+        setStatus('error');
+      }
+    } else if (network === 'ton') {
+      setCurrentRpc('TON Center API');
+      try {
+        const bal = await getTonBalance(address);
+        if (bal !== null) {
+          setResult(bal);
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
+      } catch {
         setStatus('error');
       }
     } else {
@@ -78,13 +94,13 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
         } else {
           setStatus('error');
         }
-      } catch (e) {
+      } catch {
         setStatus('error');
       }
     }
   };
 
-  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : 'SOL';
+  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : network === 'solana' ? 'SOL' : network === 'ton' ? 'TON' : 'LTC';
 
   return (
     <div className="my-10 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
