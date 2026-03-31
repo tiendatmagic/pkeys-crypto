@@ -15,19 +15,22 @@
     "@ton/core": "^0.63.1",
     "@ton/crypto": "^3.3.0",
     "@ton/ton": "^16.2.2",
+    "@types/elliptic": "^6.4.18",
     "bitcoinjs-lib": "^7.0.1",
     "bs58": "^6.0.0",
     "buffer": "^6.0.3",
     "cashaddrjs": "^0.4.4",
     "crypto-browserify": "^3.12.1",
     "ecpair": "^3.0.1",
+    "elliptic": "^6.6.1",
     "ethers": "^6.16.0",
     "lucide-react": "^1.7.0",
     "next": "16.2.1",
     "process": "^0.11.10",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "stream-browserify": "^3.0.0"
+    "stream-browserify": "^3.0.0",
+    "xrpl": "^4.6.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

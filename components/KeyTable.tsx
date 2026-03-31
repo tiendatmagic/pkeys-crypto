@@ -9,13 +9,15 @@ import { SOL_KEYS_PER_PAGE, deriveSolanaAddress, SOL_RPC_ENDPOINTS } from '@/lib
 import { TON_KEYS_PER_PAGE, deriveTonAddress } from '@/lib/ton';
 import { SUI_KEYS_PER_PAGE } from '@/lib/sui-constants';
 import { deriveSuiAddress } from '@/lib/sui';
+import { XRP_KEYS_PER_PAGE } from '@/lib/xrp-constants';
+import { deriveXrpAddress } from '@/lib/xrp';
 import { KeyRow } from './KeyRow';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 interface KeyTableProps {
   page: string;
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'sui';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'xrp';
 }
 
 export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
@@ -24,7 +26,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
   const [isBatchLoading, setIsBatchLoading] = useState(false);
 
   const provider = useMemo(() => {
-    if (network === 'bitcoin' || network === 'solana' || network === 'bitcoincash' || network === 'litecoin') return undefined;
+    if (network === 'bitcoin' || network === 'solana' || network === 'bitcoincash' || network === 'litecoin' || network === 'xrp') return undefined;
     const rpc = RPC_ENDPOINTS[Math.floor(Math.random() * RPC_ENDPOINTS.length)];
     return new ethers.JsonRpcProvider(rpc);
   }, [pageBigInt, network]);
@@ -41,12 +43,13 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
                       network === 'litecoin' ? LTC_KEYS_PER_PAGE :
                       network === 'ton' ? TON_KEYS_PER_PAGE :
                       network === 'sui' ? SUI_KEYS_PER_PAGE :
+                      network === 'xrp' ? XRP_KEYS_PER_PAGE :
                       SOL_KEYS_PER_PAGE;
 
   const keys = useMemo(() => {
     const startRange = (pageBigInt - 1n) * BigInt(keysPerPage);
-    return Array.from({ length: keysPerPage }, (_, i) => {
-      const index = startRange + BigInt(i) + (network === 'bitcoin' || network === 'bitcoincash' || network === 'litecoin' ? 1n : 0n);
+    return Array.from({ length: Number(keysPerPage) }, (_, i) => {
+      const index = startRange + BigInt(i) + 1n;
       const pk = indexToPrivateKey(index);
       let address = '';
       if (network === 'ethereum') address = getAddressFromPrivateKey(pk);
@@ -55,6 +58,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
       if (network === 'litecoin') address = deriveLitecoinAddresses(pk).segwit;
       if (network === 'ton') address = deriveTonAddress(pk).nonBounceable;
       if (network === 'sui') address = deriveSuiAddress(pk);
+      if (network === 'xrp') address = deriveXrpAddress(pk);
       
       return {
         index,
@@ -155,8 +159,9 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
                network === 'bitcoin' ? 'Bitcoin Addresses (T: Taproot, S: SegWit, L: Legacy)' : 
                network === 'bitcoincash' ? 'Bitcoin Cash Addresses (C: CashAddr, L: Legacy)' :
                network === 'litecoin' ? 'Litecoin Addresses (T: Taproot, S: SegWit, L: Legacy)' :
-               network === 'ton' ? 'TON Addresses' :
-               network === 'sui' ? 'Sui Address (Blake2b)' :
+               network === 'ton' ? 'TON Addresses (U: Non-Bounceable, E: Bounceable)' :
+               network === 'sui' ? 'Sui Address (Ed25519)' :
+               network === 'xrp' ? 'XRP Address (SECP256K1)' :
                'Solana Address (Base58)'}
             </th>
           </tr>

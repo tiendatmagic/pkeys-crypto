@@ -8,6 +8,7 @@ import { deriveLitecoinAddresses, getLitecoinBalance } from '@/lib/litecoin';
 import { deriveSolanaAddress, getSolanaBalance } from '@/lib/solana';
 import { deriveTonAddress, getTonBalance } from '@/lib/ton';
 import { deriveSuiAddress, getSuiBalance } from '@/lib/sui';
+import { deriveXrpAddress, getXrpBalance } from '@/lib/xrp';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { ExternalLink, Copy, Check } from 'lucide-react';
@@ -20,7 +21,7 @@ interface KeyRowProps {
   initialBalance?: string | null;
   provider?: ethers.JsonRpcProvider;
   solanaConnection?: Connection;
-  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui';
+  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'xrp';
 }
 
 interface AddressesState {
@@ -31,6 +32,7 @@ interface AddressesState {
     ltc?: { legacy: string, segwit: string, nativeSegwit: string, taproot: string };
     ton?: { bounceable: string, nonBounceable: string, raw: string };
     sui?: string;
+    xrp?: string;
 }
 
 export function KeyRow({ index, privateKey, initialAddress, initialBalance, provider, solanaConnection, network }: KeyRowProps) {
@@ -78,6 +80,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
     } else if (network === 'sui') {
       mainAddr = deriveSuiAddress(privateKey);
       newAddresses.sui = mainAddr;
+    } else if (network === 'xrp') {
+      mainAddr = deriveXrpAddress(privateKey);
+      newAddresses.xrp = mainAddr;
     }
     
     setAddress(mainAddr);
@@ -86,7 +91,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
 
   useEffect(() => {
     if (initialBalance !== undefined) {
-      if (network === 'ethereum' || network === 'solana' || network === 'sui' || (network === 'bitcoincash' && initialBalance !== null) || (network === 'litecoin' && initialBalance !== null) || (network === 'ton' && initialBalance !== null)) {
+      if (network === 'ethereum' || network === 'solana' || network === 'sui' || network === 'xrp' || (network === 'bitcoincash' && initialBalance !== null) || (network === 'litecoin' && initialBalance !== null) || (network === 'ton' && initialBalance !== null)) {
         setBalance(initialBalance);
       }
       setIsError(initialBalance === null);
@@ -138,6 +143,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
       } else if (type === 'sui') {
         const bal = await getSuiBalance(addr);
         if (bal === null) setIsError(true); else setBalance(bal);
+      } else if (type === 'xrp') {
+        const bal = await getXrpBalance(addr);
+        if (bal === null) setIsError(true); else setBalance(bal);
       }
     } catch {
       setIsError(true);
@@ -166,6 +174,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                          network === 'litecoin' ? 'LTC' :
                          network === 'ton' ? 'TON' :
                          network === 'sui' ? 'SUI' :
+                         network === 'xrp' ? 'XRP' :
                          'SOL';
 
   return (
@@ -174,9 +183,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         {index.toString()}
       </td>
       <td className="hidden sm:table-cell py-4 px-3 md:px-6">
-        {network === 'ethereum' || network === 'solana' || network === 'sui' ? (
+        {network === 'ethereum' || network === 'solana' || network === 'sui' || network === 'xrp' ? (
           <div 
-            onClick={() => !isFetching && fetchBalance(address, network === 'ethereum' ? 'eth' : network === 'solana' ? 'solana' : 'sui')}
+            onClick={() => !isFetching && fetchBalance(address, network === 'ethereum' ? 'eth' : network === 'solana' ? 'solana' : network === 'sui' ? 'sui' : 'xrp')}
             className={`px-3 py-1.5 rounded-full text-[11px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 ${
               balance && parseFloat(balance) > 0 
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 shadow-md-1 scale-105' 
@@ -314,9 +323,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         </div>
       </td>
       <td className="py-4 px-3 md:px-6 font-mono text-sm leading-none">
-        {network === 'ethereum' || network === 'solana' || network === 'sui' ? (
+        {network === 'ethereum' || network === 'solana' || network === 'sui' || network === 'xrp' ? (
           <div className="flex items-center gap-2 md:gap-3">
-              <span className={`${network === 'ethereum' ? 'text-md-primary' : network === 'sui' ? 'text-blue-500' : 'text-purple-600 dark:text-purple-400'} whitespace-nowrap text-[11px] md:text-[13px] font-medium block max-w-[70px] sm:max-w-[100px] lg:max-w-none truncate`} title={address}>
+              <span className={`${network === 'ethereum' ? 'text-md-primary' : network === 'sui' ? 'text-blue-500' : network === 'xrp' ? 'text-slate-600 dark:text-slate-400' : 'text-purple-600 dark:text-purple-400'} whitespace-nowrap text-[11px] md:text-[13px] font-medium block max-w-[70px] sm:max-w-[100px] lg:max-w-none truncate`} title={address}>
                 {address}
               </span>
               <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 shrink-0">
@@ -327,10 +336,15 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                       {copied === 'addr' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
                   </button>
                   <a 
-                      href={network === 'ethereum' ? `https://etherscan.io/address/${address}` : network === 'sui' ? `https://suiscan.xyz/mainnet/address/${address}` : `https://solscan.io/account/${address}`} 
+                      href={
+                        network === 'ethereum' ? `https://etherscan.io/address/${address}` : 
+                        network === 'sui' ? `https://suiscan.xyz/mainnet/address/${address}` : 
+                        network === 'xrp' ? `https://xrpscan.com/account/${address}` :
+                        `https://solscan.io/account/${address}`
+                      } 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:${network === 'ethereum' ? 'text-md-primary' : network === 'sui' ? 'text-blue-500' : 'text-purple-500'} transition-all active:scale-75`}
+                      className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:${network === 'ethereum' ? 'text-md-primary' : network === 'sui' ? 'text-blue-500' : network === 'xrp' ? 'text-slate-500' : 'text-purple-500'} transition-all active:scale-75`}
                   >
                       <ExternalLink className="w-3.5 h-3.5" />
                   </a>

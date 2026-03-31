@@ -8,11 +8,12 @@ import { getBitcoinCashBalance } from '@/lib/bitcoincash';
 import { getLitecoinBalance } from '@/lib/litecoin';
 import { getTonBalance } from '@/lib/ton';
 import { getSuiBalance } from '@/lib/sui';
+import { getXrpBalance } from '@/lib/xrp';
 import { ethers } from 'ethers';
 import { ShieldCheck, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DiagnosticsProps {
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'xrp';
 }
 
 export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
@@ -28,6 +29,8 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     ? 'EQA277ad8-3404-45fe-926f-897d01566cae' // Replace with a real one
     : network === 'sui'
     ? '0x1eb8784d2847a9fe0277ad8340445fe926f897d01566caed8da6bf26964af9d7' // Replace with a real one
+    : network === 'xrp'
+    ? 'r9cZA1mLtmjt9J2UqX3He17aM2K2dF4y3h' // Known XRP Genesis/Early address
     : '4zvwRjXUKGivpXN912D8Aht8q7KbcF74HphgmoCtajSs'; // Seed 0 address
 
   const [address, setAddress] = useState(defaultAddress);
@@ -87,6 +90,19 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
       } catch {
         setStatus('error');
       }
+    } else if (network === 'xrp') {
+      setCurrentRpc('XRP Ledger RPC');
+      try {
+        const bal = await getXrpBalance(address);
+        if (bal !== null) {
+          setResult(bal);
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
+      } catch {
+        setStatus('error');
+      }
     } else if (network === 'ton') {
       setCurrentRpc('TON Center API');
       try {
@@ -116,7 +132,15 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     }
   };
 
-  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : network === 'solana' ? 'SOL' : network === 'ton' ? 'TON' : network === 'sui' ? 'SUI' : 'LTC';
+  const currencySymbol = network === 'ethereum' ? 'ETH' : 
+                         network === 'bitcoin' ? 'BTC' : 
+                         network === 'solana' ? 'SOL' : 
+                         network === 'bitcoincash' ? 'BCH' :
+                         network === 'litecoin' ? 'LTC' :
+                         network === 'ton' ? 'TON' : 
+                         network === 'sui' ? 'SUI' : 
+                         network === 'xrp' ? 'XRP' :
+                         'ETH';
 
   return (
     <div className="my-10 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
@@ -134,7 +158,16 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder={`Enter ${network === 'ethereum' ? 'Ethereum' : network === 'bitcoin' ? 'Bitcoin' : 'Solana'} Address`}
+          placeholder={`Enter ${
+            network === 'ethereum' ? 'Ethereum' : 
+            network === 'bitcoin' ? 'Bitcoin' : 
+            network === 'solana' ? 'Solana' : 
+            network === 'bitcoincash' ? 'Bitcoin Cash' :
+            network === 'litecoin' ? 'Litecoin' :
+            network === 'ton' ? 'TON' :
+            network === 'sui' ? 'Sui' :
+            'XRP'
+          } Address`}
           className="flex-1 px-4 py-2 rounded-xl bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono"
         />
         <button

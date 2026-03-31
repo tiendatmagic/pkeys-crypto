@@ -78,6 +78,12 @@ export function Header() {
             >
               Sui
             </Link>
+            <Link
+              href="/xrp/1"
+              className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              XRP
+            </Link>
           </nav>
 
           <button

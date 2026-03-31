@@ -11,6 +11,7 @@ import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
 import { LTC_MAX_PAGES } from '@/lib/litecoin';
 import { TON_MAX_PAGES } from '@/lib/ton';
 import { SUI_MAX_PAGES } from '@/lib/sui-constants';
+import { XRP_MAX_PAGES } from '@/lib/xrp-constants';
 import { SOL_MAX_PAGES } from '@/lib/solana';
 
 interface RandomPages {
@@ -21,6 +22,7 @@ interface RandomPages {
   litecoin: bigint;
   ton: bigint;
   sui: bigint;
+  xrp: bigint;
 }
 
 export default function Home() {
@@ -32,7 +34,8 @@ export default function Home() {
     bitcoincash: 1n,
     litecoin: 1n,
     ton: 1n,
-    sui: 1n
+    sui: 1n,
+    xrp: 1n
   });
   const { ripples, addRipple } = useRipple();
 
@@ -46,7 +49,8 @@ export default function Home() {
         bitcoincash: getRandomPage(BCH_MAX_PAGES),
         litecoin: getRandomPage(LTC_MAX_PAGES),
         ton: getRandomPage(TON_MAX_PAGES),
-        sui: getRandomPage(SUI_MAX_PAGES)
+        sui: getRandomPage(SUI_MAX_PAGES),
+        xrp: getRandomPage(XRP_MAX_PAGES)
       });
     } catch {
       // Ignore random generation errors
@@ -64,7 +68,7 @@ export default function Home() {
             <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-none text-gray-900 dark:text-white">
               Explore the <span className="text-md-primary font-black uppercase">Uncountable</span> Universe
             </h1>
-            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed font-medium">
               Navigate through $2^{256}$ keys with absolute precision.
               A premium, high-performance explorer for the most secure blockchains.
             </p>
@@ -132,6 +136,29 @@ export default function Home() {
                 <h2 className="mb-2 text-2xl font-black tracking-tight">Solana</h2>
                 <p className="mb-6 text-sm font-medium text-purple-50/80 leading-relaxed">
                   High-speed Ed25519 based blockchain with thousands of transactions per second.
+                </p>
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white">
+                  <span>Enter Explorer</span>
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-2" />
+                </div>
+              </div>
+            </Link>
+
+            {/* Ripple (XRP) Card */}
+            <Link 
+              href={mounted ? `/xrp/${randomPages.xrp.toString()}` : '#'} 
+              onMouseDown={addRipple}
+              className="group relative block overflow-hidden rounded-3xl bg-linear-to-br from-slate-600 to-slate-900 p-8 text-white shadow-xl transition-all duration-500 hover:scale-[1.03] hover:shadow-2xl"
+            >
+              <RippleContainer ripples={ripples} />
+              <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-white/10 blur-3xl transition-all duration-700 group-hover:bg-white/20"></div>
+              <div className="relative z-10">
+                <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md">
+                  <span className="text-3xl">✕</span>
+                </div>
+                <h2 className="mb-2 text-2xl font-black tracking-tight">Ripple</h2>
+                <p className="mb-6 text-sm font-medium text-slate-100/80 leading-relaxed">
+                  XRP Ledger. Fast, secure, and energy-efficient payments.
                 </p>
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-white">
                   <span>Enter Explorer</span>
@@ -238,7 +265,7 @@ export default function Home() {
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-8 shadow-md-1">
                 <ShieldCheck className="w-7 h-7 text-md-primary" />
               </div>
-              <h3 className="text-2xl font-black mb-4">Math Security</h3>
+              <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Math Security</h3>
               <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm font-medium">
                 Understand the sheer scale of 256-bit encryption. The total address space is larger than the number of atoms in the observable universe.
               </p>
@@ -248,7 +275,7 @@ export default function Home() {
               <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center mb-8 shadow-md-1">
                 <Zap className="w-7 h-7 text-purple-600 dark:text-purple-400" />
               </div>
-              <h3 className="text-2xl font-black mb-4">v6 Performance</h3>
+              <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">v6 Performance</h3>
               <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm font-medium">
                 Fast, real-time balance checking and address derivation using Next.js 15 and ethers.js v6 with Multicall3 support.
               </p>
@@ -258,7 +285,7 @@ export default function Home() {
               <div className="w-14 h-14 rounded-2xl bg-pink-50 dark:bg-pink-900/30 flex items-center justify-center mb-8 shadow-md-1">
                 <Globe className="w-7 h-7 text-pink-600 dark:text-pink-400" />
               </div>
-              <h3 className="text-2xl font-black mb-4">Unlimited Range</h3>
+              <h3 className="text-2xl font-black mb-4 uppercase tracking-tighter">Unlimited Range</h3>
               <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm font-medium">
                 Go to any page, from the first to the very last, with support for massive BigInt indices and smooth scrolling.
               </p>
@@ -273,13 +300,13 @@ export default function Home() {
             <div className="w-8 h-8 rounded-lg bg-md-primary flex items-center justify-center shadow-md-1">
               <Key className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white uppercase">Pkeys crypto</span>
+            <span className="text-xl font-black tracking-tight text-gray-900 dark:text-white uppercase whitespace-nowrap">Pkeys crypto</span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm max-w-lg mx-auto mb-8 font-bold italic opacity-70">
             Educational tool to visualize the entropy of private keys.
             Never use keys found here for storing real assets.
           </p>
-          <div className="text-[11px] font-black text-white uppercase tracking-widest bg-gray-900 dark:bg-md-primary px-8 py-3 rounded-full inline-block shadow-xl">
+          <div className="text-[11px] font-black text-white uppercase tracking-widest bg-gray-900 dark:bg-md-primary px-10 py-4 rounded-full inline-block shadow-xl">
             Copyright 2026 Pkeys crypto. All rights reserved.
           </div>
         </div>

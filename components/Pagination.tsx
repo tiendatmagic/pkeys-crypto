@@ -10,11 +10,12 @@ import { LTC_MAX_PAGES } from '@/lib/litecoin';
 import { TON_MAX_PAGES } from '@/lib/ton';
 import { SUI_MAX_PAGES } from '@/lib/sui-constants';
 import { SOL_MAX_PAGES } from '@/lib/solana';
+import { XRP_MAX_PAGES } from '@/lib/xrp-constants';
 import { useRipple, RippleContainer } from './Ripple';
 
 interface PaginationProps {
   currentPage: string;
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'xrp';
 }
 
 export function Pagination({ currentPage, network = 'ethereum' }: PaginationProps) {
@@ -30,6 +31,7 @@ export function Pagination({ currentPage, network = 'ethereum' }: PaginationProp
                    network === 'litecoin' ? LTC_MAX_PAGES :
                    network === 'ton' ? TON_MAX_PAGES :
                    network === 'sui' ? SUI_MAX_PAGES :
+                   network === 'xrp' ? XRP_MAX_PAGES :
                    SOL_MAX_PAGES;
   const baseUrl = network === 'ethereum' ? '/ethereum' : `/${network}`;
 
