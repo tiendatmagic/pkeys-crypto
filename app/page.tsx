@@ -6,12 +6,18 @@ import { Key, ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useRipple, RippleContainer } from '@/components/Ripple';
 import { MAX_PAGES } from '@/lib/blockchain';
-import { SOL_MAX_PAGES } from '@/lib/solana';
+import { BTC_MAX_PAGES } from '@/lib/bitcoin';
 import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
+import { LTC_MAX_PAGES } from '@/lib/litecoin';
+import { SOL_MAX_PAGES } from '@/lib/solana';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [randomPage, setRandomPage] = useState<bigint>(1n);
+  const [randomBtcPage, setRandomBtcPage] = useState<bigint>(1n);
+  const [randomBchPage, setRandomBchPage] = useState<bigint>(1n);
+  const [randomLtcPage, setRandomLtcPage] = useState<bigint>(1n);
+  const [randomSolPage, setRandomSolPage] = useState<bigint>(1n);
   const { ripples, addRipple } = useRipple();
 
   useEffect(() => {
@@ -20,25 +26,20 @@ export default function Home() {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
     const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
-    const rand = (BigInt('0x' + hex) % MAX_PAGES) + 1n;
-    setRandomPage(rand);
     
-    const solRand = (BigInt('0x' + hex) % SOL_MAX_PAGES) + 1n;
-    setSolanaRandomPage(solRand);
-
-    const bchRand = (BigInt('0x' + hex) % BCH_MAX_PAGES) + 1n;
-    setBchRandomPage(bchRand);
+    setRandomPage((BigInt('0x' + hex) % MAX_PAGES) + 1n);
+    setRandomBtcPage((BigInt('0x' + hex) % BTC_MAX_PAGES) + 1n);
+    setRandomBchPage((BigInt('0x' + hex) % BCH_MAX_PAGES) + 1n);
+    setRandomLtcPage((BigInt('0x' + hex) % LTC_MAX_PAGES) + 1n);
+    setRandomSolPage((BigInt('0x' + hex) % SOL_MAX_PAGES) + 1n);
   }, []);
-
-  const [solanaRandomPage, setSolanaRandomPage] = useState<bigint>(1n);
-  const [bchRandomPage, setBchRandomPage] = useState<bigint>(1n);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
       <Header />
 
       <main className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16 md:mb-24 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-md">
             <h1 className="text-4xl md:text-7xl font-black tracking-tighter leading-none text-gray-900 dark:text-white">
               Explore the <span className="text-md-primary">Uncountable</span> Universe
@@ -49,7 +50,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-24 max-w-7xl mx-auto px-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-24 max-w-none px-0">
                 {/* Ethereum Card */}
                <Link
                  href={mounted ? `/ethereum/${randomPage}` : '#'}
@@ -75,7 +76,7 @@ export default function Home() {
 
                 {/* Bitcoin Card */}
                <Link
-                 href={mounted ? `/bitcoin/${randomPage}` : '#'}
+                 href={mounted ? `/bitcoin/${randomBtcPage}` : '#'}
                  onMouseDown={addRipple}
                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-yellow-500/30"
                >
@@ -96,9 +97,53 @@ export default function Home() {
                  </div>
                </Link>
 
+                {/* Bitcoin Cash Card */}
+                <Link
+                  href={mounted ? `/bitcoincash/${randomBchPage}` : '#'}
+                  onMouseDown={addRipple}
+                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-green-500/30"
+                >
+                  <RippleContainer ripples={ripples} />
+                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                     <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                       <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-md-1">
+                         <Key className="w-5 h-5 text-white" />
+                       </div>
+                     </div>
+                     <h2 className="text-2xl font-black mb-3">Bitcoin Cash</h2>
+                     <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                       Explore Legacy and CashAddr.
+                     </p>
+                     <div className="mt-auto flex items-center gap-2 text-green-600 dark:text-green-500 font-bold text-sm group-hover:gap-3 transition-all">
+                       Explore <ArrowRight className="w-4 h-4" />
+                     </div>
+                  </div>
+                </Link>
+
+                {/* Litecoin Card */}
+                <Link
+                  href={mounted ? `/litecoin/${randomLtcPage}` : '#'}
+                  onMouseDown={addRipple}
+                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-blue-500/30"
+                >
+                  <RippleContainer ripples={ripples} />
+                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                       <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">Ł</span>
+                    </div>
+                    <h2 className="text-2xl font-black mb-3">Litecoin</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Explore Legacy, SegWit, and Taproot.
+                    </p>
+                    <div className="mt-auto flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm group-hover:gap-3 transition-all">
+                      Explore <ArrowRight className="w-4 h-4" />
+                    </div>
+                  </div>
+                </Link>
+
                {/* Solana Card */}
                <Link
-                 href={mounted ? `/solana/${solanaRandomPage}` : '#'}
+                 href={mounted ? `/solana/${randomSolPage}` : '#'}
                  onMouseDown={addRipple}
                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-purple-500/30"
                >
@@ -114,29 +159,6 @@ export default function Home() {
                       Explore Ed25519 based Solana addresses.
                     </p>
                      <div className="mt-auto flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-sm group-hover:gap-3 transition-all">
-                       Explore <ArrowRight className="w-4 h-4" />
-                     </div>
-                  </div>
-                </Link>
-
-                {/* Bitcoin Cash Card */}
-                <Link
-                  href={mounted ? `/bitcoincash/${bchRandomPage}` : '#'}
-                  onMouseDown={addRipple}
-                  className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-green-500/30"
-                >
-                  <RippleContainer ripples={ripples} />
-                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
-                     <div className="w-16 h-16 rounded-2xl bg-green-50 dark:bg-green-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
-                       <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center shadow-md-1">
-                         <Key className="w-5 h-5 text-white" />
-                       </div>
-                     </div>
-                     <h2 className="text-2xl font-black mb-3">BCH</h2>
-                     <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                       Explore Legacy and CashAddr.
-                     </p>
-                     <div className="mt-auto flex items-center gap-2 text-green-600 dark:text-green-500 font-bold text-sm group-hover:gap-3 transition-all">
                        Explore <ArrowRight className="w-4 h-4" />
                      </div>
                   </div>

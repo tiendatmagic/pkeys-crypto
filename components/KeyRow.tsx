@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { getAddressFromPrivateKey, getBalance } from '@/lib/blockchain';
 import { deriveBitcoinAddresses, getBitcoinBalance } from '@/lib/bitcoin';
 import { deriveBitcoinCashAddresses, getBitcoinCashBalance } from '@/lib/bitcoincash';
+import { deriveLitecoinAddresses, getLitecoinBalance } from '@/lib/litecoin';
 import { deriveSolanaAddress, getSolanaBalance } from '@/lib/solana';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
@@ -17,16 +18,18 @@ interface KeyRowProps {
   initialBalance?: string | null;
   provider?: ethers.JsonRpcProvider;
   solanaConnection?: Connection;
-  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash';
+  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
 }
 
 export function KeyRow({ index, privateKey, initialAddress, initialBalance, provider, solanaConnection, network }: KeyRowProps) {
   const [address, setAddress] = useState(initialAddress || '');
   const [btcAddresses, setBtcAddresses] = useState<{ legacy: string, segwit: string, taproot: string } | null>(null);
   const [bchAddresses, setBchAddresses] = useState<{ legacy: string, cashAddr: string } | null>(null);
+  const [ltcAddresses, setLtcAddresses] = useState<{ legacy: string, segwit: string, nativeSegwit: string, taproot: string } | null>(null);
   const [balance, setBalance] = useState<string | null>(initialBalance || null);
   const [btcBalances, setBtcBalances] = useState<{ legacy: string | null, segwit: string | null, taproot: string | null }>({ legacy: null, segwit: null, taproot: null });
   const [bchBalances, setBchBalances] = useState<{ legacy: string | null, cashAddr: string | null }>({ legacy: null, cashAddr: null });
+  const [ltcBalances, setLtcBalances] = useState<{ legacy: string | null, segwit: string | null, nativeSegwit: string | null, taproot: string | null }>({ legacy: null, segwit: null, nativeSegwit: null, taproot: null });
   const [isError, setIsError] = useState(false);
   const [copied, setCopied] = useState<'pk' | 'addr' | 'addr-segwit' | 'addr-taproot' | null>(null);
   const [isFetching, setIsFetching] = useState(false);
@@ -42,11 +45,15 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
     } else if (network === 'bitcoin') {
       const btc = deriveBitcoinAddresses(privateKey);
       setBtcAddresses(btc);
-      setAddress(btc.segwit); // Default to SegWit for display
+      setAddress(btc.segwit); // Default to SegWit
     } else if (network === 'bitcoincash') {
       const bch = deriveBitcoinCashAddresses(privateKey);
       setBchAddresses(bch);
       setAddress(bch.cashAddr);
+    } else if (network === 'litecoin') {
+      const ltc = deriveLitecoinAddresses(privateKey);
+      setLtcAddresses(ltc);
+      setAddress(ltc.segwit); // Default to SegWit
     } else if (network === 'solana') {
       setAddress(deriveSolanaAddress(privateKey));
     }
@@ -54,14 +61,14 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
 
   useEffect(() => {
     if (initialBalance !== undefined) {
-      if (network === 'ethereum' || network === 'solana' || (network === 'bitcoincash' && initialBalance !== null)) {
+      if (network === 'ethereum' || network === 'solana' || (network === 'bitcoincash' && initialBalance !== null) || (network === 'litecoin' && initialBalance !== null)) {
         setBalance(initialBalance);
       }
       setIsError(initialBalance === null);
     }
   }, [initialBalance, network]);
 
-  const fetchBalance = async (addr: string, type: 'eth' | 'btc-legacy' | 'btc-segwit' | 'btc-taproot' | 'solana' | 'bch-legacy' | 'bch-cash') => {
+  const fetchBalance = async (addr: string, type: 'eth' | 'btc-legacy' | 'btc-segwit' | 'btc-taproot' | 'solana' | 'bch-legacy' | 'bch-cash' | 'ltc-legacy' | 'ltc-segwit' | 'ltc-native' | 'ltc-taproot') => {
     setIsFetching(true);
     setIsError(false);
     
@@ -91,6 +98,22 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
           setBalance(bal);
         }
       }
+    } else if (type.startsWith('ltc')) {
+      const bal = await getLitecoinBalance(addr);
+      if (bal === null) {
+        setIsError(true);
+      } else {
+        if (type === 'ltc-legacy') {
+          setLtcBalances(prev => ({ ...prev, legacy: bal }));
+        } else if (type === 'ltc-segwit') {
+          setLtcBalances(prev => ({ ...prev, segwit: bal }));
+          setBalance(bal);
+        } else if (type === 'ltc-native') {
+          setLtcBalances(prev => ({ ...prev, nativeSegwit: bal }));
+        } else {
+          setLtcBalances(prev => ({ ...prev, taproot: bal }));
+        }
+      }
     } else if (type.startsWith('btc')) {
       const bal = await getBitcoinBalance(addr);
       if (bal === null) {
@@ -100,7 +123,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
           setBtcBalances(prev => ({ ...prev, legacy: bal }));
         } else if (type === 'btc-segwit') {
           setBtcBalances(prev => ({ ...prev, segwit: bal }));
-          setBalance(bal); // Sync main balance with SegWit
+          setBalance(bal);
         } else {
           setBtcBalances(prev => ({ ...prev, taproot: bal }));
         }
@@ -127,6 +150,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
   const currencySymbol = network === 'ethereum' ? 'ETH' : 
                          network === 'bitcoin' ? 'BTC' : 
                          network === 'bitcoincash' ? 'BCH' :
+                         network === 'litecoin' ? 'LTC' :
                          'SOL';
 
   return (
@@ -172,6 +196,33 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
               title="Legacy Balance"
             >
               {formatDisplayBalance(bchBalances.legacy)}
+              <span className="ml-1 opacity-50">L</span>
+            </div>
+          </div>
+        ) : network === 'litecoin' ? (
+          <div className="flex flex-col gap-1.5">
+            <div 
+              onClick={() => !isFetching && ltcAddresses && fetchBalance(ltcAddresses.segwit, 'ltc-segwit')}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
+                ltcBalances.segwit && parseFloat(ltcBalances.segwit) > 0 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
+              } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
+              title="SegWit Balance"
+            >
+              {formatDisplayBalance(ltcBalances.segwit)}
+              <span className="ml-1 opacity-50">S</span>
+            </div>
+            <div 
+              onClick={() => !isFetching && ltcAddresses && fetchBalance(ltcAddresses.legacy, 'ltc-legacy')}
+              className={`px-2 py-1 rounded-full text-[10px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 w-fit ${
+                ltcBalances.legacy && parseFloat(ltcBalances.legacy) > 0 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40' 
+                    : 'bg-gray-100 text-gray-500 dark:bg-gray-800/60'
+              } ${isFetching ? 'animate-pulse' : 'hover:scale-105'}`}
+              title="Legacy Balance"
+            >
+              {formatDisplayBalance(ltcBalances.legacy)}
               <span className="ml-1 opacity-50">L</span>
             </div>
           </div>
@@ -290,6 +341,49 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-green-500"
+                >
+                    <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+             </div>
+          </div>
+        ) : network === 'litecoin' ? (
+          <div className="flex flex-col gap-3">
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 w-4">S</span>
+                <span className="text-blue-600 dark:text-blue-400 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={ltcAddresses?.segwit}>
+                  {ltcAddresses?.segwit}
+                </span>
+                <button 
+                    onClick={() => copyToClipboard(ltcAddresses?.segwit || '', 'addr')}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
+                >
+                    {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
+                </button>
+                <a 
+                    href={`https://blockchair.com/litecoin/address/${ltcAddresses?.segwit}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
+                >
+                    <ExternalLink className="w-2.5 h-2.5" />
+                </a>
+             </div>
+             <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-gray-400 w-4">L</span>
+                <span className="text-gray-500 dark:text-gray-500 text-[11px] md:text-[12px] font-medium truncate max-w-[120px] md:max-w-none" title={ltcAddresses?.legacy}>
+                  {ltcAddresses?.legacy}
+                </span>
+                <button 
+                    onClick={() => copyToClipboard(ltcAddresses?.legacy || '', 'addr')}
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-75"
+                >
+                    {copied === 'addr' ? <Check className="w-2.5 h-2.5 text-green-500" /> : <Copy className="w-2.5 h-2.5 text-gray-400" />}
+                </button>
+                <a 
+                    href={`https://blockchair.com/litecoin/address/${ltcAddresses?.legacy}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500"
                 >
                     <ExternalLink className="w-2.5 h-2.5" />
                 </a>

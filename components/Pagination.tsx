@@ -6,12 +6,13 @@ import Link from 'next/link';
 import { MAX_PAGES } from '@/lib/blockchain';
 import { BTC_MAX_PAGES } from '@/lib/bitcoin';
 import { BCH_MAX_PAGES } from '@/lib/bitcoincash';
+import { LTC_MAX_PAGES } from '@/lib/litecoin';
 import { SOL_MAX_PAGES } from '@/lib/solana';
 import { useRipple, RippleContainer } from './Ripple';
 
 interface PaginationProps {
   currentPage: bigint;
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash';
+  network: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
 }
 
 export function Pagination({ currentPage, network = 'ethereum' }: PaginationProps) {
@@ -23,11 +24,9 @@ export function Pagination({ currentPage, network = 'ethereum' }: PaginationProp
   const maxPages = network === 'ethereum' ? MAX_PAGES : 
                    network === 'bitcoin' ? BTC_MAX_PAGES : 
                    network === 'bitcoincash' ? BCH_MAX_PAGES :
+                   network === 'litecoin' ? LTC_MAX_PAGES :
                    SOL_MAX_PAGES;
-  const baseUrl = network === 'ethereum' ? '/ethereum' : 
-                  network === 'bitcoin' ? '/bitcoin' : 
-                  network === 'bitcoincash' ? '/bitcoincash' :
-                  '/solana';
+  const baseUrl = network === 'ethereum' ? '/ethereum' : `/${network}`;
 
   const prevPage = currentPage > 1n ? currentPage - 1n : 1n;
   const nextPage = currentPage < maxPages ? currentPage + 1n : maxPages;

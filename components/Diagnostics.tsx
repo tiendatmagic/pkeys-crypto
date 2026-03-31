@@ -5,11 +5,12 @@ import { getBalance, RPC_ENDPOINTS } from '@/lib/blockchain';
 import { getBitcoinBalance } from '@/lib/bitcoin';
 import { getSolanaBalance, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { getBitcoinCashBalance } from '@/lib/bitcoincash';
+import { getLitecoinBalance } from '@/lib/litecoin';
 import { ethers } from 'ethers';
 import { ShieldCheck, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DiagnosticsProps {
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin';
 }
 
 export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
@@ -19,6 +20,8 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' // Genesis block
     : network === 'bitcoincash'
     ? 'bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a' // Known address
+    : network === 'litecoin'
+    ? 'LhRjN4R8itxZ7Xf52Xf52Xf52Xf52Xf52X' // Known address
     : '4zvwRjXUKGivpXN912D8Aht8q7KbcF74HphgmoCtajSs'; // Seed 0 address
 
   const [address, setAddress] = useState(defaultAddress);
