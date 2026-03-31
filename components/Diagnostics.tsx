@@ -7,11 +7,12 @@ import { getSolanaBalance, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { getBitcoinCashBalance } from '@/lib/bitcoincash';
 import { getLitecoinBalance } from '@/lib/litecoin';
 import { getTonBalance } from '@/lib/ton';
+import { getSuiBalance } from '@/lib/sui';
 import { ethers } from 'ethers';
 import { ShieldCheck, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DiagnosticsProps {
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui';
 }
 
 export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
@@ -25,6 +26,8 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     ? 'LhRjN4R8itxZ7Xf52Xf52Xf52Xf52Xf52X' // Known address
     : network === 'ton'
     ? 'EQA277ad8-3404-45fe-926f-897d01566cae' // Replace with a real one
+    : network === 'sui'
+    ? '0x1eb8784d2847a9fe0277ad8340445fe926f897d01566caed8da6bf26964af9d7' // Replace with a real one
     : '4zvwRjXUKGivpXN912D8Aht8q7KbcF74HphgmoCtajSs'; // Seed 0 address
 
   const [address, setAddress] = useState(defaultAddress);
@@ -71,6 +74,19 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
       } catch {
         setStatus('error');
       }
+    } else if (network === 'sui') {
+      setCurrentRpc('Sui Mainnet RPC');
+      try {
+        const bal = await getSuiBalance(address);
+        if (bal !== null) {
+          setResult(bal);
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
+      } catch {
+        setStatus('error');
+      }
     } else if (network === 'ton') {
       setCurrentRpc('TON Center API');
       try {
@@ -100,7 +116,7 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     }
   };
 
-  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : network === 'solana' ? 'SOL' : network === 'ton' ? 'TON' : 'LTC';
+  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : network === 'solana' ? 'SOL' : network === 'ton' ? 'TON' : network === 'sui' ? 'SUI' : 'LTC';
 
   return (
     <div className="my-10 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">

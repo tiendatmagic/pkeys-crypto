@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {},
+  transpilePackages: ['@mysten/sui'],
   webpack: (config, { isServer, webpack }) => {
     if (!isServer) {
         config.resolve.fallback = {

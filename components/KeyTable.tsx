@@ -7,13 +7,15 @@ import { BCH_KEYS_PER_PAGE, deriveBitcoinCashAddresses } from '@/lib/bitcoincash
 import { LTC_KEYS_PER_PAGE, deriveLitecoinAddresses } from '@/lib/litecoin';
 import { SOL_KEYS_PER_PAGE, deriveSolanaAddress, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { TON_KEYS_PER_PAGE, deriveTonAddress } from '@/lib/ton';
+import { SUI_KEYS_PER_PAGE } from '@/lib/sui-constants';
+import { deriveSuiAddress } from '@/lib/sui';
 import { KeyRow } from './KeyRow';
 import { ethers } from 'ethers';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 interface KeyTableProps {
   page: string;
-  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton';
+  network?: 'ethereum' | 'bitcoin' | 'solana' | 'bitcoincash' | 'litecoin' | 'ton' | 'sui' | 'sui';
 }
 
 export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
@@ -38,6 +40,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
                       network === 'bitcoincash' ? BCH_KEYS_PER_PAGE :
                       network === 'litecoin' ? LTC_KEYS_PER_PAGE :
                       network === 'ton' ? TON_KEYS_PER_PAGE :
+                      network === 'sui' ? SUI_KEYS_PER_PAGE :
                       SOL_KEYS_PER_PAGE;
 
   const keys = useMemo(() => {
@@ -51,6 +54,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
       if (network === 'bitcoincash') address = deriveBitcoinCashAddresses(pk).cashAddr;
       if (network === 'litecoin') address = deriveLitecoinAddresses(pk).segwit;
       if (network === 'ton') address = deriveTonAddress(pk).nonBounceable;
+      if (network === 'sui') address = deriveSuiAddress(pk);
       
       return {
         index,
@@ -152,6 +156,7 @@ export function KeyTable({ page, network = 'ethereum' }: KeyTableProps) {
                network === 'bitcoincash' ? 'Bitcoin Cash Addresses (C: CashAddr, L: Legacy)' :
                network === 'litecoin' ? 'Litecoin Addresses (T: Taproot, S: SegWit, L: Legacy)' :
                network === 'ton' ? 'TON Addresses' :
+               network === 'sui' ? 'Sui Address (Blake2b)' :
                'Solana Address (Base58)'}
             </th>
           </tr>
