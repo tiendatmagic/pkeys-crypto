@@ -3,17 +3,20 @@
 import React, { useState, useEffect } from 'react';
 import { getBalance, RPC_ENDPOINTS } from '@/lib/blockchain';
 import { getBitcoinBalance } from '@/lib/bitcoin';
+import { getSolanaBalance, SOL_RPC_ENDPOINTS } from '@/lib/solana';
 import { ethers } from 'ethers';
 import { ShieldCheck, Play, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface DiagnosticsProps {
-  network?: 'ethereum' | 'bitcoin';
+  network?: 'ethereum' | 'bitcoin' | 'solana';
 }
 
 export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
   const defaultAddress = network === 'ethereum' 
     ? '0xd8da6bf26964af9d7eed9e03e53415d37aa96045' // Vitalik
-    : '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'; // Genesis block
+    : network === 'bitcoin' 
+    ? '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa' // Genesis block
+    : '4zvwRjXUKGivpXN912D8Aht8q7KbcF74HphgmoCtajSs'; // Seed 0 address
 
   const [address, setAddress] = useState(defaultAddress);
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -45,6 +48,20 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
       } catch (e) {
         setStatus('error');
       }
+    } else if (network === 'solana') {
+      const rpc = SOL_RPC_ENDPOINTS[Math.floor(Math.random() * SOL_RPC_ENDPOINTS.length)];
+      setCurrentRpc(rpc);
+      try {
+        const bal = await getSolanaBalance(address);
+        if (bal !== null) {
+          setResult(bal);
+          setStatus('success');
+        } else {
+          setStatus('error');
+        }
+      } catch (e) {
+        setStatus('error');
+      }
     } else {
       setCurrentRpc('blockchain.info API');
       try {
@@ -61,7 +78,7 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
     }
   };
 
-  const currencySymbol = network === 'ethereum' ? 'ETH' : 'BTC';
+  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : 'SOL';
 
   return (
     <div className="my-10 p-6 rounded-2xl bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
@@ -79,7 +96,7 @@ export function Diagnostics({ network = 'ethereum' }: DiagnosticsProps) {
           type="text"
           value={address}
           onChange={(e) => setAddress(e.target.value)}
-          placeholder={`Enter ${network === 'ethereum' ? 'Ethereum' : 'Bitcoin'} Address`}
+          placeholder={`Enter ${network === 'ethereum' ? 'Ethereum' : network === 'bitcoin' ? 'Bitcoin' : 'Solana'} Address`}
           className="flex-1 px-4 py-2 rounded-xl bg-white dark:bg-gray-900 border border-indigo-200 dark:border-indigo-800 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono"
         />
         <button

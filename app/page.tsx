@@ -6,6 +6,7 @@ import { Key, ArrowRight, ShieldCheck, Zap, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { useRipple, RippleContainer } from '@/components/Ripple';
 import { MAX_PAGES } from '@/lib/blockchain';
+import { SOL_MAX_PAGES } from '@/lib/solana';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -20,7 +21,12 @@ export default function Home() {
     const hex = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
     const rand = (BigInt('0x' + hex) % MAX_PAGES) + 1n;
     setRandomPage(rand);
+    
+    const solRand = (BigInt('0x' + hex) % SOL_MAX_PAGES) + 1n;
+    setSolanaRandomPage(solRand);
   }, []);
+
+  const [solanaRandomPage, setSolanaRandomPage] = useState<bigint>(1n);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors duration-300 overflow-x-hidden">
@@ -38,8 +44,8 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 mb-24 max-w-4xl mx-auto px-4">
-               {/* Ethereum Card */}
+          <div className="grid md:grid-cols-3 gap-6 mb-24 max-w-6xl mx-auto px-4">
+                {/* Ethereum Card */}
                <Link
                  href={mounted ? `/ethereum/${randomPage}` : '#'}
                  onMouseDown={addRipple}
@@ -47,22 +53,22 @@ export default function Home() {
                >
                  <RippleContainer ripples={ripples} />
                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-8 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
-                      <div className="w-12 h-12 rounded-full bg-md-primary flex items-center justify-center shadow-md-1">
-                        <Key className="w-6 h-6 text-white" />
+                    <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                      <div className="w-10 h-10 rounded-full bg-md-primary flex items-center justify-center shadow-md-1">
+                        <Key className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                    <h2 className="text-3xl font-black mb-3">Ethereum</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs">
-                      Explore Ethereum private keys, addresses and balances with extreme speed.
+                    <h2 className="text-2xl font-black mb-3">Ethereum</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Explore Ethereum keys with speed.
                     </p>
-                    <div className="mt-auto flex items-center gap-2 text-md-primary font-bold group-hover:gap-4 transition-all">
-                      Start Exploring <ArrowRight className="w-5 h-5" />
+                    <div className="mt-auto flex items-center gap-2 text-md-primary font-bold text-sm group-hover:gap-3 transition-all">
+                      Explore <ArrowRight className="w-4 h-4" />
                     </div>
                  </div>
                </Link>
 
-               {/* Bitcoin Card */}
+                {/* Bitcoin Card */}
                <Link
                  href={mounted ? `/bitcoin/${randomPage}` : '#'}
                  onMouseDown={addRipple}
@@ -70,17 +76,40 @@ export default function Home() {
                >
                  <RippleContainer ripples={ripples} />
                  <div className="p-8 md:p-10 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center mb-8 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
-                      <div className="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center shadow-md-1">
-                        <Key className="w-6 h-6 text-white" />
+                    <div className="w-16 h-16 rounded-2xl bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                      <div className="w-10 h-10 rounded-full bg-yellow-500 flex items-center justify-center shadow-md-1">
+                        <Key className="w-5 h-5 text-white" />
                       </div>
                     </div>
-                    <h2 className="text-3xl font-black mb-3">Bitcoin</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs">
-                      Explore the world of Bitcoin with full Legacy, Native SegWit, and Taproot support.
+                    <h2 className="text-2xl font-black mb-3">Bitcoin</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Explore Legacy, SegWit, and Taproot.
                     </p>
-                    <div className="mt-auto flex items-center gap-2 text-yellow-600 dark:text-yellow-500 font-bold group-hover:gap-4 transition-all">
-                      Start Exploring <ArrowRight className="w-5 h-5" />
+                    <div className="mt-auto flex items-center gap-2 text-yellow-600 dark:text-yellow-500 font-bold text-sm group-hover:gap-3 transition-all">
+                      Explore <ArrowRight className="w-4 h-4" />
+                    </div>
+                 </div>
+               </Link>
+
+               {/* Solana Card */}
+               <Link
+                 href={mounted ? `/solana/${solanaRandomPage}` : '#'}
+                 onMouseDown={addRipple}
+                 className="md-card overflow-hidden group hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative border-2 border-transparent hover:border-purple-500/30"
+               >
+                 <RippleContainer ripples={ripples} />
+                 <div className="p-8 md:p-10 flex flex-col items-center text-center">
+                    <div className="w-16 h-16 rounded-2xl bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center mb-6 shadow-md-2 group-hover:scale-110 transition-transform duration-500">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-green-400 flex items-center justify-center shadow-md-1">
+                        <Key className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+                    <h2 className="text-2xl font-black mb-3">Solana</h2>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 text-sm">
+                      Explore Ed25519 based Solana addresses.
+                    </p>
+                    <div className="mt-auto flex items-center gap-2 text-purple-600 dark:text-purple-400 font-bold text-sm group-hover:gap-3 transition-all">
+                      Explore <ArrowRight className="w-4 h-4" />
                     </div>
                  </div>
                </Link>

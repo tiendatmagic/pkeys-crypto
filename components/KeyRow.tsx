@@ -3,7 +3,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { getAddressFromPrivateKey, getBalance } from '@/lib/blockchain';
 import { deriveBitcoinAddresses, getBitcoinBalance } from '@/lib/bitcoin';
+import { deriveSolanaAddress, getSolanaBalance } from '@/lib/solana';
 import { ethers } from 'ethers';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { ExternalLink, Copy, Check, Info } from 'lucide-react';
 import { useToast } from './Toast';
 
@@ -13,10 +15,11 @@ interface KeyRowProps {
   initialAddress?: string;
   initialBalance?: string | null;
   provider?: ethers.JsonRpcProvider;
-  network: 'ethereum' | 'bitcoin';
+  solanaConnection?: Connection;
+  network: 'ethereum' | 'bitcoin' | 'solana';
 }
 
-export function KeyRow({ index, privateKey, initialAddress, initialBalance, provider, network }: KeyRowProps) {
+export function KeyRow({ index, privateKey, initialAddress, initialBalance, provider, solanaConnection, network }: KeyRowProps) {
   const [address, setAddress] = useState(initialAddress || '');
   const [btcAddresses, setBtcAddresses] = useState<{ legacy: string, segwit: string, taproot: string } | null>(null);
   const [balance, setBalance] = useState<string | null>(initialBalance || null);
@@ -33,10 +36,12 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
       } else {
         setAddress(getAddressFromPrivateKey(privateKey));
       }
-    } else {
+    } else if (network === 'bitcoin') {
       const btc = deriveBitcoinAddresses(privateKey);
       setBtcAddresses(btc);
       setAddress(btc.segwit); // Default to SegWit for display
+    } else if (network === 'solana') {
+      setAddress(deriveSolanaAddress(privateKey));
     }
   }, [privateKey, initialAddress, network]);
 
@@ -49,12 +54,19 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
     }
   }, [initialBalance, network]);
 
-  const fetchBalance = async (addr: string, type: 'eth' | 'btc-legacy' | 'btc-segwit' | 'btc-taproot') => {
+  const fetchBalance = async (addr: string, type: 'eth' | 'btc-legacy' | 'btc-segwit' | 'btc-taproot' | 'solana') => {
     setIsFetching(true);
     setIsError(false);
     
     if (type === 'eth' && provider) {
       const bal = await getBalance(addr, provider);
+      if (bal === null) {
+        setIsError(true);
+      } else {
+        setBalance(bal);
+      }
+    } else if (type === 'solana') {
+      const bal = await getSolanaBalance(addr);
       if (bal === null) {
         setIsError(true);
       } else {
@@ -93,7 +105,7 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
     return num.toLocaleString(undefined, { maximumFractionDigits: 5 });
   };
 
-  const currencySymbol = network === 'ethereum' ? 'ETH' : 'BTC';
+  const currencySymbol = network === 'ethereum' ? 'ETH' : network === 'bitcoin' ? 'BTC' : 'SOL';
 
   return (
     <tr className="hover:bg-gray-100/50 dark:hover:bg-gray-800/30 transition-all duration-300 group">
@@ -101,9 +113,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         {index.toString()}
       </td>
       <td className="hidden sm:table-cell py-4 px-3 md:px-6">
-        {network === 'ethereum' ? (
+        {network !== 'bitcoin' ? (
           <div 
-            onClick={() => !isFetching && fetchBalance(address, 'eth')}
+            onClick={() => !isFetching && fetchBalance(address, network === 'ethereum' ? 'eth' : 'solana')}
             className={`px-3 py-1.5 rounded-full text-[11px] font-bold inline-flex items-center cursor-pointer transition-all duration-300 ${
               balance && parseFloat(balance) > 0 
                   ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 shadow-md-1 scale-105' 
@@ -169,9 +181,9 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
         </div>
       </td>
       <td className="py-4 px-3 md:px-6 font-mono text-sm leading-none">
-        {network === 'ethereum' ? (
+        {network !== 'bitcoin' ? (
           <div className="flex items-center gap-2 md:gap-3">
-              <span className="text-md-primary dark:text-primary-light whitespace-nowrap text-[11px] md:text-[13px] font-medium block max-w-[70px] sm:max-w-[100px] lg:max-w-none truncate" title={address}>
+              <span className={`${network === 'ethereum' ? 'text-md-primary' : 'text-purple-600 dark:text-purple-400'} whitespace-nowrap text-[11px] md:text-[13px] font-medium block max-w-[70px] sm:max-w-[100px] lg:max-w-none truncate`} title={address}>
                 {address}
               </span>
               <div className="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 shrink-0">
@@ -182,10 +194,10 @@ export function KeyRow({ index, privateKey, initialAddress, initialBalance, prov
                       {copied === 'addr' ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5 text-gray-400" />}
                   </button>
                   <a 
-                      href={`https://etherscan.io/address/${address}`} 
+                      href={network === 'ethereum' ? `https://etherscan.io/address/${address}` : `https://solscan.io/account/${address}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-md-primary transition-all active:scale-75"
+                      className={`w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:${network === 'ethereum' ? 'text-md-primary' : 'text-purple-500'} transition-all active:scale-75`}
                   >
                       <ExternalLink className="w-3.5 h-3.5" />
                   </a>
